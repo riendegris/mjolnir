@@ -923,7 +923,7 @@ dependencies = [
  "slog-async 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-term 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "sqlx 0.3.4",
+ "sqlx 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "warp 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1639,15 +1639,17 @@ dependencies = [
 
 [[package]]
 name = "sqlx"
-version = "0.3.4"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "sqlx-core 0.3.4",
- "sqlx-macros 0.3.4",
+ "sqlx-core 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sqlx-macros 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "sqlx-core"
-version = "0.3.4"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "async-native-tls 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-stream 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1680,7 +1682,8 @@ dependencies = [
 
 [[package]]
 name = "sqlx-macros"
-version = "0.3.4"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "dotenv 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1688,7 +1691,7 @@ dependencies = [
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 1.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "sqlx-core 0.3.4",
+ "sqlx-core 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2343,6 +2346,9 @@ dependencies = [
 "checksum snafu-derive 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0ec32ba84a7a86aeb0bc32fd0c46d31b0285599f68ea72e87eff6127889d99e1"
 "checksum socket2 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)" = "03088793f677dce356f3ccc2edb1b314ad191ab702a5de3faf49304f7e104918"
 "checksum sqlformat 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5ce64a4576e1720a2e511bf3ccdb8c0f6cfed0fc265bcbaa0bd369485e02c631"
+"checksum sqlx 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "8974cacd80085fbe49e778708d660dec6fb351604dc34c3905b26efb2803b038"
+"checksum sqlx-core 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "88ac5a436f941c42eac509471a730df5c3c58e1450e68cd39afedbd948206273"
+"checksum sqlx-macros 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "de2ae78b783af5922d811b14665a5a3755e531c3087bb805cf24cf71f15e6780"
 "checksum subtle 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 "checksum syn 1.0.18 (registry+https://github.com/rust-lang/crates.io-index)" = "410a7488c0a728c7ceb4ad59b9567eb4053d02e8cc7f5c0e0eeeb39518369213"
 "checksum synstructure 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)" = "67656ea1dc1b41b1451851562ea232ec2e5a80242139f7e679ceccfb5d61f545"

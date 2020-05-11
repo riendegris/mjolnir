@@ -39,7 +39,22 @@ cd database
 
 #### 2. Create the backend
 
+```sh
+cd backend
+cargo build --release
+```
+
+This results in a binary under `backend/target/release/mjolnir`, which is the server to which the
+frontend will connect.
+
 #### 3. Create the frontend
+
+```sh
+cd frontend
+npm run build
+```
+
+This results in a directory `frontend/dist`, which will be served by the backend.
 
 ## Running the tests
 

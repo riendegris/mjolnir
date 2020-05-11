@@ -24,7 +24,7 @@ slog = "2.5"
 slog-term = "2.5"
 slog-async = "2.5"
 snafu = { version = "0.6", features = [ "futures" ] }
-sqlx = { path="../../ext/sqlx", default-features = false, features = [ "postgres", "runtime-tokio", "macros", "uuid", "chrono", "bigdecimal" ] }
+sqlx = { version = "0.3.4", default-features = false, features = [ "postgres", "runtime-tokio", "macros", "uuid", "chrono", "bigdecimal" ] }
 uuid = { version = "0.8", features = [ "serde", "v4" ] }
 warp = { version = "0.2.2" }
 yaml-rust = "0.4"
