@@ -1,0 +1,10 @@
+INSERT INTO main.env_bano_item VALUES ('75', '75.csv', 'axsthouo', 3.4, 'available', default);
+INSERT INTO main.env_bano_item VALUES ('92', '92.csv', 'p3pthouo', 2.4, 'available', default);
+INSERT INTO main.env_bano_item VALUES ('94', '94.csv', 'srcsturc', 8.4, 'available', default);
+INSERT INTO main.env_bano_item VALUES ('29', '29.csv', 'srcsturc', 8.4, 'available', default);
+INSERT INTO main.env_bano VALUES ('idf', 'region ile de france');
+INSERT INTO main.env_bano VALUES ('bretagne', 'region bretagne');
+INSERT INTO main.env_bano_map VALUES ('idf', '75');
+INSERT INTO main.env_bano_map VALUES ('idf', '92');
+INSERT INTO main.env_bano_map VALUES ('idf', '94');
+INSERT INTO main.env_bano_map VALUES ('bretagne', '29');

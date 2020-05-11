@@ -1,0 +1,24 @@
+-- This function returns a bit of information about each document, suitable
+-- to be printed in a list.
+-- DROP FUNCTION document_list(kind);
+CREATE OR REPLACE FUNCTION main.bano_environments()
+RETURNS TABLE (_id UUID,
+  _title VARCHAR(256),
+  _abstract TEXT,
+  _author VARCHAR(256),
+  _tags TEXT[],
+  _image VARCHAR(256),
+  _kind kind,
+  _genre genre,
+  _updated_at TIMESTAMPTZ)
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT d.id, d.title, d.abstract, a.fullname, d.tags, d.image, d.kind, d.genre, d.updated_at
+  FROM documents AS d
+  INNER JOIN authors AS a ON a.id = d.author
+  WHERE d.kind = $1
+  ORDER BY d.updated_at DESC;
+END;
+$$
+LANGUAGE plpgsql;

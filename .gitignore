@@ -1,0 +1,7 @@
+backend/.env
+backend/target
+backend/**/*.rs.bk
+database/build.sql
+database/init.sql
+frontend/dist
+frontend/node_modules

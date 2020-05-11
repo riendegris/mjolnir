@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="1"
+            tests="1">
+
+  <testsuite name="test-with-pageobjects"
+    errors="0" failures="1" hostname="" id="" package="test-with-pageobjects" skipped="1"
+    tests="1" time="5.339" timestamp="">
+  
+    <testcase name="e2e tests using page objects" classname="test-with-pageobjects" time="5.339" assertions="1">  <failure message="Timed out while waiting for element &lt;#app&gt; to be present for 5000 milliseconds. - expected [0;32m&#34;visible&#34;[0m but got: [0;31m&#34;not found&#34;[0m [0;90m(5194ms)[0m">    at Object.e2e tests using page objects (/home/matt/lab/fullstack/mjolnir/frontend/tests/e2e/specs/test-with-pageobjects.js:14:14)</failure>
+
+    
+    </testcase>
+  
+
+  
+
+  
+    
+    <testcase
+      name="verify if string &#34;e2e-nightwatch&#34; is within the cli plugin links" classname="test-with-pageobjects">
+      <skipped />
+    </testcase>
+    
+  
+  </testsuite>
+</testsuites>

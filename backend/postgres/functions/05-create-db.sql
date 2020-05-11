@@ -1,0 +1,2 @@
+CREATE USER odin WITH LOGIN PASSWORD 'secret';
+CREATE DATABASE mjolnir OWNER odin;
