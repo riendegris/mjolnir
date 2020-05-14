@@ -1,3 +1,4 @@
+use juniper::{graphql_value, FieldError, IntoFieldError};
 use snafu::{Backtrace, Snafu};
 use std::io;
 
@@ -52,4 +53,18 @@ pub enum Error {
         source: reqwest::Error,
         backtrace: Backtrace,
     },
+}
+
+impl IntoFieldError for Error {
+    fn into_field_error(self) -> FieldError {
+        match self {
+            Error::UserError { details, .. } => {
+                FieldError::new("User Error", graphql_value!({ "internal_error": details }))
+            }
+            Error::DBError { details, .. } => {
+                FieldError::new("User Error", graphql_value!({ "internal_error": details }))
+            }
+            _ => FieldError::new("Go Figure!", graphql_value!({ "internal_error": "sol" })),
+        }
+    }
 }
