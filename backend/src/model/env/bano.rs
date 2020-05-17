@@ -65,10 +65,10 @@ pub async fn download_bano_item(
     context: &gql::Context,
 ) -> Result<Item, error::Error> {
     // spawn a download task, and update the database to say its in progress
-    let id = String::from(bano_id);
-    let iid = String::from(item_id);
-    let pool = context.pool.clone();
-    let logger = context.logger.clone();
+    let _id = String::from(bano_id);
+    let _iid = String::from(item_id);
+    let _pool = context.pool.clone();
+    let _logger = context.logger.clone();
     // tokio::spawn(download_bano_item_task(id, iid, pool, logger));
     sqlx::query_as(
         "UPDATE main.env_bano_item

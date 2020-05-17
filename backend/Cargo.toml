@@ -29,3 +29,21 @@ sqlx = { version = "0.3.4", default-features = false, features = [ "postgres", "
 uuid = { version = "0.8", features = [ "serde", "v4" ] }
 warp = { version = "0.2.2" }
 yaml-rust = "0.4"
+
+[lib]
+name = "mjolnir"
+path = "src/lib.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[test]]
+name = "cucumber"
+path = "tests/cucumber.rs"
+harness = false # Allows Cucumber to print output instead of libtest
+
+[dev-dependencies]
+cucumber_rust = "0.6"
+gherkin_rust = "0.7"
+# tokio = { version = "0.2.13", features = [ "full" ] }

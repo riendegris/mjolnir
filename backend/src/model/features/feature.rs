@@ -47,22 +47,40 @@ pub async fn fetch_all_features(context: &gql::Context) -> Result<Vec<Feature>, 
         })
 }
 
+// I'm not sure this function is useful, i've implemented it for testing loading -> fetching.
+pub async fn fetch_feature_by_id(
+    id: Uuid,
+    context: &gql::Context,
+) -> Result<Feature, error::Error> {
+    debug!(context.logger, "Fetching feature with id '{}'", id);
+    // We select everything except search which is a created field.
+    sqlx::query_as(
+        "SELECT id, name, description, tags, created_at, updated_at FROM main.features WHERE id=$1",
+    )
+    .bind(id)
+    .fetch_one(&context.pool)
+    .await
+    .context(error::DBError {
+        details: "Could not retrieve features",
+    })
+}
+
 pub async fn create_or_replace_feature(
-    feature: &Feature,
+    id: Uuid,
+    name: String,
+    description: String,
+    tags: String,
     context: &gql::Context,
 ) -> Result<IdTimestamp, error::Error> {
-    debug!(
-        context.logger,
-        "Creating or Updating Feature '{}'", feature.name
-    );
+    debug!(context.logger, "Creating or Updating Feature '{}'", name);
     sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
-        .bind(feature.id)
-        .bind(feature.name.clone())
-        .bind(feature.description.clone())
-        .bind(feature.tags.join(","))
+        .bind(id)
+        .bind(name.clone())
+        .bind(description)
+        .bind(tags)
         .fetch_one(&context.pool)
         .await
         .context(error::DBError {
-            details: format!("Could not insert or replace feature {}", feature.id),
+            details: format!("Could not create or replace feature {}", name),
         })
 }

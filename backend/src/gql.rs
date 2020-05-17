@@ -3,6 +3,7 @@ use super::model::{env, features};
 use juniper::{FieldResult, GraphQLObject, IntoFieldError};
 use slog::{debug, Logger};
 use sqlx::postgres::PgPool;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Context {
@@ -52,8 +53,20 @@ impl Query {
 
     /// Return a list of features environments.
     async fn features(&self, context: &Context) -> FieldResult<Vec<features::feature::Feature>> {
-        debug!(context.logger, "Querying BANO environments");
+        debug!(context.logger, "Fetching All Features");
         features::feature::fetch_all_features(&context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
+
+    /// Return a list of features environments.
+    async fn feature(
+        &self,
+        id: Uuid,
+        context: &Context,
+    ) -> FieldResult<features::feature::Feature> {
+        debug!(context.logger, "Fetching Feature with id '{}'", id);
+        features::feature::fetch_feature_by_id(id, &context)
             .await
             .map_err(IntoFieldError::into_field_error)
     }
@@ -148,5 +161,24 @@ impl Mutation {
                 data: None,
             }),
         }
+    }
+
+    async fn add_feature(
+        name: String,
+        description: String,
+        tags: String,
+        context: &Context,
+    ) -> FieldResult<features::IdTimestamp> {
+        debug!(context.logger, "Adding Feature {}", name);
+
+        features::feature::create_or_replace_feature(
+            uuid::Uuid::new_v4(),
+            name,
+            description,
+            tags,
+            &context,
+        )
+        .await
+        .map_err(IntoFieldError::into_field_error)
     }
 }
