@@ -1,7 +1,7 @@
-use super::error;
+// use super::error;
 use super::model::{env, features};
-use juniper::{graphql_value, FieldError, FieldResult, GraphQLObject, IntoFieldError};
-use slog::{debug, info, Logger};
+use juniper::{FieldResult, GraphQLObject, IntoFieldError};
+use slog::{debug, Logger};
 use sqlx::postgres::PgPool;
 
 #[derive(Debug)]
@@ -50,10 +50,10 @@ impl Query {
         }
     }
 
-    /// Return a list of Bano environments.
-    async fn features(&self, context: &Context) -> FieldResult<Vec<features::Feature>> {
+    /// Return a list of features environments.
+    async fn features(&self, context: &Context) -> FieldResult<Vec<features::feature::Feature>> {
         debug!(context.logger, "Querying BANO environments");
-        features::fetch_all_features(&context)
+        features::feature::fetch_all_features(&context)
             .await
             .map_err(IntoFieldError::into_field_error)
     }

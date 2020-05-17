@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 bigdecimal = "0.1"
 chrono = { version = "0.4", features = [ "serde" ] }
+cucumber_rust = "0.6"
 dotenv = "0.15"
 tokio = { version = "0.2.13", features = [ "full" ] }
 futures = { version = "0.3" }

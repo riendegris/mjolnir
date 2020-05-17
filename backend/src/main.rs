@@ -1,15 +1,11 @@
-use futures::{future, FutureExt, Stream, StreamExt, TryFutureExt, TryStreamExt};
+use futures::{Stream, StreamExt, TryFutureExt};
 use slog::{error, info, o, Drain, Logger};
-use snafu::{futures::TryStreamExt as STSE, ResultExt};
-use sqlx::postgres::{PgListener, PgNotification, PgPool};
+use snafu::ResultExt;
+use sqlx::postgres::PgPool;
 use std::convert::Infallible;
 use std::time::Duration;
 use tokio::time::interval;
-use warp::{
-    self,
-    filters::sse::{self, ServerSentEvent},
-    Filter,
-};
+use warp::{self, filters::sse::ServerSentEvent, Filter};
 
 mod error;
 mod gql;

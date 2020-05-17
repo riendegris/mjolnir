@@ -5,7 +5,7 @@ use futures::stream::{self, TryStreamExt};
 use juniper::GraphQLObject;
 use md5::{Digest, Md5};
 use serde::{Deserialize, Serialize};
-use slog::{debug, info, Logger};
+use slog::{info, Logger};
 use snafu::ResultExt;
 use sqlx::postgres::PgPool;
 use sqlx::{
