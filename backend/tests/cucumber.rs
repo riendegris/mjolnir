@@ -25,8 +25,8 @@ impl std::default::Default for MyWorld {
                 background: None,
                 scenarios: Vec::new(),
                 rules: Vec::new(),
-                tags: None,
-                position: (0, 0),
+                tags: Vec::new(),
+                span: (0, 0),
             },
             context,
             id: Uuid::new_v4(), // this value will get overwritten
@@ -82,8 +82,8 @@ cucumber! {
 mod example_steps {
     use cucumber_rust::steps;
     use gherkin_rust::Feature;
-    use slog::info;
-    use std::convert::TryFrom;
+    use slog::{info, warn};
+    //use std::convert::TryFrom;
     use std::path::PathBuf;
 
     // Any type that implements cucumber::World + Default can be the world
@@ -91,21 +91,18 @@ mod example_steps {
         given regex r#"^I am loading a feature from file '(.*)'$"# (String) |world, filename, _step| {
             // We read the feature from file, use gherkin to turn it into a feature.
             let filepath = PathBuf::from(filename);
-            world.feature = Feature::try_from(filepath.as_path()).unwrap();
+            world.feature = Feature::parse_path(filepath.as_path()).unwrap();
             // Then we extract a few values from that feature, and prepare a GraphQL statement.
             let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
             variables.insert(String::from("name"), juniper::InputValue::scalar(world.feature.name.clone()));
             variables.insert(String::from("description"), juniper::InputValue::scalar(world.feature.description.clone().unwrap_or(String::from(""))));
-            variables.insert(String::from("tags"), juniper::InputValue::scalar(world.feature.tags.clone().map_or_else(
-                        || String::from(""),
-                        | tags | tags.join(", ")
-                        )));
+            variables.insert(String::from("tags"), juniper::InputValue::list(world.feature.tags.iter().map(|tag| juniper::InputValue::scalar(tag.clone())).collect()));
             // Using GraphQL is in the async world, so we need a runtime...
             let mut rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 // execute the sql statement.
                 let (res, errs) = juniper::execute(
-                    r#"mutation($name: String!, $description: String!, $tags: String!) {
+                    r#"mutation($name: String!, $description: String!, $tags: [String!]!) {
                         addFeature(name: $name, description: $description, tags: $tags) {
                             id, updatedAt
                         }
@@ -116,8 +113,14 @@ mod example_steps {
                     &world.context
                     ).await.unwrap();
 
-                assert!(errs.is_empty());
+                if !errs.is_empty() {
+                    for err in errs {
+                      warn!(world.context.logger, "{:?}", err);
+                    }
+                    assert!(false, "errors occured while executing a graphql statement for adding a feature")
+                }
 
+                info!(world.context.logger, "Hello!");
                 // and extract the id of the feature to store it in the world
                 info!(world.context.logger, "{}", res);
                 world.id = uuid::Uuid::parse_str(

@@ -11,6 +11,7 @@ bigdecimal = "0.1"
 chrono = { version = "0.4", features = [ "serde" ] }
 cucumber_rust = "0.6"
 dotenv = "0.15"
+gherkin_rust = "0.8"
 tokio = { version = "0.2.13", features = [ "full" ] }
 futures = { version = "0.3" }
 juniper = { git="https://github.com/graphql-rust/juniper.git", features = ["chrono", "uuid"] }
@@ -45,5 +46,5 @@ harness = false # Allows Cucumber to print output instead of libtest
 
 [dev-dependencies]
 cucumber_rust = "0.6"
-gherkin_rust = "0.7"
+gherkin_rust = "0.8"
 # tokio = { version = "0.2.13", features = [ "full" ] }

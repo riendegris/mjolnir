@@ -1,4 +1,3 @@
-// use super::error;
 use super::model::{env, features};
 use juniper::{FieldResult, GraphQLObject, IntoFieldError};
 use slog::{debug, Logger};
@@ -166,9 +165,9 @@ impl Mutation {
     async fn add_feature(
         name: String,
         description: String,
-        tags: String,
+        tags: Vec<String>,
         context: &Context,
-    ) -> FieldResult<features::IdTimestamp> {
+    ) -> FieldResult<features::feature::Feature> {
         debug!(context.logger, "Adding Feature {}", name);
 
         features::feature::create_or_replace_feature(
@@ -180,5 +179,16 @@ impl Mutation {
         )
         .await
         .map_err(IntoFieldError::into_field_error)
+    }
+
+    async fn load_feature(
+        feature: String,
+        context: &Context,
+    ) -> FieldResult<features::feature::Feature> {
+        debug!(context.logger, "Loading Feature");
+
+        features::feature::create_or_replace_feature_from_string(feature, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
     }
 }

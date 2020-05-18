@@ -53,6 +53,14 @@ pub enum Error {
         source: reqwest::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Gherkin Parser Error: {} => {}", details, source))]
+    #[snafu(visibility(pub))]
+    GherkinError {
+        details: String,
+        source: gherkin_rust::ParseError<gherkin_rust::LineCol>,
+        backtrace: Backtrace,
+    },
 }
 
 impl IntoFieldError for Error {

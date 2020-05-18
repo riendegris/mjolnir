@@ -1,3 +1,13 @@
+-- This type is used to return a feature to the client. We skip some fields, like search
+CREATE TYPE main.return_feature_type AS (
+    id UUID
+  , name TEXT
+  , description TEXT
+  , tags TEXT[]
+  , created_at TIMESTAMPTZ
+  , updated_at TIMESTAMPTZ
+);
+
 -- This function returns a bit of information about each feature in the database,
 -- using a string to filter features based on full text search.
 CREATE OR REPLACE FUNCTION main.feature_search(
@@ -22,26 +32,29 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION main.create_or_replace_feature (
-    INOUT _id UUID      -- id          (1)
-  , TEXT                -- name        (2)
-  , TEXT                -- description (3)
-  , TEXT                -- tags        (4)
-  , OUT _updated_at TIMESTAMPTZ)
+    _id          UUID      -- id          (1)
+  , _name        TEXT      -- name        (2)
+  , _description TEXT      -- description (3)
+  , _tags        TEXT[]    -- tags        (4)
+) RETURNS main.return_feature_type
 AS $$
+DECLARE
+  res main.return_feature_type;
 BEGIN
   INSERT INTO main.features VALUES (
-      $1                        -- id
-    , $2                        -- name
-    , $3                        -- description
-    , string_to_array($4, ',')  -- tags
+      $1  -- id
+    , $2  -- name
+    , $3  -- description
+    , $4  -- tags
   )
   ON CONFLICT (id) DO
     UPDATE
     SET   name = EXCLUDED.name
         , description = EXCLUDED.description
         , tags = EXCLUDED.tags
-        , updated_at = NOW()
-    RETURNING updated_at INTO _updated_at;
+        , updated_at = NOW();
+  SELECT id, name, description, tags, created_at, updated_at FROM main.features WHERE id = $1 INTO res;
+  RETURN res;
 END;
 $$
 LANGUAGE plpgsql;

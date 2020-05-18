@@ -1,5 +1,5 @@
 // use super::scenario::Scenario;
-use super::IdTimestamp;
+// use super::IdTimestamp;
 use crate::{error, gql};
 use chrono::prelude::*;
 use juniper::GraphQLObject;
@@ -69,9 +69,9 @@ pub async fn create_or_replace_feature(
     id: Uuid,
     name: String,
     description: String,
-    tags: String,
+    tags: Vec<String>,
     context: &gql::Context,
-) -> Result<IdTimestamp, error::Error> {
+) -> Result<Feature, error::Error> {
     debug!(context.logger, "Creating or Updating Feature '{}'", name);
     sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
         .bind(id)
@@ -81,6 +81,30 @@ pub async fn create_or_replace_feature(
         .fetch_one(&context.pool)
         .await
         .context(error::DBError {
-            details: format!("Could not create or replace feature {}", name),
+            details: format!("Could not create or replace feature '{}'", name),
+        })
+}
+
+pub async fn create_or_replace_feature_from_string(
+    feature: String,
+    context: &gql::Context,
+) -> Result<Feature, error::Error> {
+    debug!(context.logger, "Creating or Updating Feature from string");
+
+    let feature = gherkin_rust::Feature::parse(feature).context(error::GherkinError {
+        details: String::from("Could not parse feature"),
+    })?;
+
+    let id = Uuid::new_v4();
+
+    sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
+        .bind(id)
+        .bind(feature.name)
+        .bind(feature.description.unwrap_or(String::from("")))
+        .bind(feature.tags)
+        .fetch_one(&context.pool)
+        .await
+        .context(error::DBError {
+            details: format!("Could not create or replace feature"),
         })
 }
