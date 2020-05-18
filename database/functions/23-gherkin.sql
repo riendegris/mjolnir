@@ -25,13 +25,11 @@ CREATE TABLE main.scenarios (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
   feature UUID REFERENCES main.features(id),
   name VARCHAR(256) NOT NULL,
-  description TEXT,
   tags TEXT[] DEFAULT '{}',
   search TSVECTOR GENERATED ALWAYS AS (
     (
       setweight(to_tsvector('english', public.textarr2text(tags)), 'A') || ' ' ||
-      setweight(to_tsvector('english', name), 'B') || ' ' ||
-      setweight(to_tsvector('english', description), 'C')
+      setweight(to_tsvector('english', name), 'B')
     )::tsvector
   ) STORED,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

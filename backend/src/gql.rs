@@ -50,7 +50,7 @@ impl Query {
         }
     }
 
-    /// Return a list of features environments.
+    /// Return a list of all features
     async fn features(&self, context: &Context) -> FieldResult<Vec<features::feature::Feature>> {
         debug!(context.logger, "Fetching All Features");
         features::feature::fetch_all_features(&context)
@@ -58,7 +58,7 @@ impl Query {
             .map_err(IntoFieldError::into_field_error)
     }
 
-    /// Return a list of features environments.
+    /// Return the feature corresponding to the given id.
     async fn feature(
         &self,
         id: Uuid,
@@ -66,6 +66,21 @@ impl Query {
     ) -> FieldResult<features::feature::Feature> {
         debug!(context.logger, "Fetching Feature with id '{}'", id);
         features::feature::fetch_feature_by_id(id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
+
+    /// Return the scenarios belonging to the feature specified by the given id.
+    async fn scenarios(
+        &self,
+        id: Uuid,
+        context: &Context,
+    ) -> FieldResult<Vec<features::scenario::Scenario>> {
+        debug!(
+            context.logger,
+            "Fetching scenarios from feature id '{}'", id
+        );
+        features::scenario::fetch_scenarios_by_feature_id(&id, &context)
             .await
             .map_err(IntoFieldError::into_field_error)
     }

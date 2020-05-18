@@ -15,21 +15,20 @@ use uuid::Uuid;
 pub struct Scenario {
     pub id: Uuid,
     pub name: String,
-    pub description: String,
     pub tags: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
+// This should match the main.return_scenario_typek
 impl<'c> FromRow<'c, PgRow<'c>> for Scenario {
     fn from_row(row: &PgRow<'c>) -> Result<Self, sqlx::Error> {
         Ok(Scenario {
             id: row.get(0),
             name: row.get(1),
-            description: row.get(2),
-            tags: row.get(3),
-            created_at: row.get(4),
-            updated_at: row.get(5),
+            tags: row.get(2),
+            created_at: row.get(3),
+            updated_at: row.get(4),
         })
     }
 }
@@ -41,7 +40,7 @@ pub async fn fetch_scenario_by_id(
     debug!(context.logger, "Fetching scenario '{}'", id);
     // We select everything except search which is a created field.
     sqlx::query_as(
-        "SELECT id, name, description, tags, created_at, updated_at FROM main.scenarios WHERE id = $1"
+        "SELECT id, name, tags, created_at, updated_at FROM main.scenarios WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&context.pool)
@@ -58,7 +57,7 @@ pub async fn fetch_scenarios_by_feature_id(
     debug!(context.logger, "Fetching scenarios from feature '{}'", id);
     // We select everything except search which is a created field.
     sqlx::query_as(
-        "SELECT id, name, description, tags, created_at, updated_at FROM main.scenarios WHERE feature = $1"
+        "SELECT id, name, tags, created_at, updated_at FROM main.scenarios WHERE feature = $1",
     )
     .bind(id)
     .fetch_all(&context.pool)
@@ -77,8 +76,13 @@ pub async fn create_or_replace_scenario(
     sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4, $5)")
         .bind(scenario.id)
         .bind(scenario.name.clone())
-        .bind(scenario.description.clone())
-        .bind(scenario.tags.join(","))
+        .bind(
+            scenario
+                .tags
+                .iter()
+                .map(|tag| tag.clone())
+                .collect::<Vec<String>>(),
+        )
         .bind(feature_id)
         .fetch_one(&context.pool)
         .await

@@ -1,7 +1,7 @@
-// use super::scenario::Scenario;
-// use super::IdTimestamp;
+use super::scenario::Scenario;
 use crate::{error, gql};
 use chrono::prelude::*;
+use futures::stream::{self, TryStreamExt};
 use juniper::GraphQLObject;
 use serde::{Deserialize, Serialize};
 use slog::debug;
@@ -97,7 +97,7 @@ pub async fn create_or_replace_feature_from_string(
 
     let id = Uuid::new_v4();
 
-    sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
+    let res = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
         .bind(id)
         .bind(feature.name)
         .bind(feature.description.unwrap_or(String::from("")))
@@ -106,5 +106,33 @@ pub async fn create_or_replace_feature_from_string(
         .await
         .context(error::DBError {
             details: format!("Could not create or replace feature"),
+        })?;
+
+    // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
+    // which we can use try_for_each and insert them in the database
+    stream::iter(feature.scenarios.into_iter().map(|scenario| Ok(scenario)))
+        .try_for_each(|scenario| async {
+            debug!(context.logger, "Inserting Scenario");
+            let sid = Uuid::new_v4();
+            // We discard the scenario, but we need to give it a type to help the compiler.
+            // TODO This may not be the most efficient...
+            let _scenario: Scenario =
+                sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4)")
+                    .bind(sid)
+                    .bind(scenario.name.clone())
+                    .bind(scenario.tags)
+                    .bind(id)
+                    .fetch_one(&context.pool)
+                    .await
+                    .context(error::DBError {
+                        details: format!(
+                            "Could not create or replace scenario '{}' for feature '{}'",
+                            scenario.name, id
+                        ),
+                    })?;
+            Ok(())
         })
+        .await?;
+
+    Ok(res)
 }
