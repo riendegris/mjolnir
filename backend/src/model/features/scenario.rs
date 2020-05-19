@@ -1,6 +1,10 @@
-use super::IdTimestamp;
+use super::{
+    step::{self},
+    IdTimestamp,
+};
 use crate::{error, gql};
 use chrono::prelude::*;
+use futures::stream::{self, TryStreamExt};
 use juniper::GraphQLObject;
 use serde::{Deserialize, Serialize};
 use slog::debug;
@@ -89,4 +93,43 @@ pub async fn create_or_replace_scenario(
         .context(error::DBError {
             details: format!("Could not insert or update feature {}", scenario.id),
         })
+}
+
+pub async fn create_or_replace_scenario_from_gherkin(
+    scenario: gherkin_rust::Scenario,
+    feature: &Uuid,
+    context: &gql::Context,
+) -> Result<Scenario, error::Error> {
+    debug!(context.logger, "Creating or Updating Scenario from gherkin");
+
+    let id = Uuid::new_v4();
+
+    let res: Scenario =
+        sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4)")
+            .bind(id)
+            .bind(scenario.name.clone())
+            .bind(
+                scenario
+                    .tags
+                    .iter()
+                    .map(|tag| tag.clone())
+                    .collect::<Vec<String>>(),
+            )
+            .bind(feature)
+            .fetch_one(&context.pool)
+            .await
+            .context(error::DBError {
+                details: format!("Could not insert or update scenario '{}'", scenario.name),
+            })?;
+
+    // Here we're turning the scenario's steps into a stream of Result<Step, _>, on
+    // which we can use try_for_each and insert them in the database
+    stream::iter(scenario.steps.into_iter().map(|step| Ok(step)))
+        .try_for_each(|step| async {
+            let _step = step::create_or_replace_step_from_gherkin(step, &id, context).await?;
+            Ok(())
+        })
+        .await?;
+
+    Ok(res)
 }

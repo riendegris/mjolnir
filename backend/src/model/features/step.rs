@@ -23,6 +23,16 @@ pub enum StepType {
     Then,
 }
 
+impl From<gherkin_rust::StepType> for StepType {
+    fn from(step_type: gherkin_rust::StepType) -> Self {
+        match step_type {
+            gherkin_rust::StepType::Given => StepType::Given,
+            gherkin_rust::StepType::When => StepType::When,
+            gherkin_rust::StepType::Then => StepType::Then,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, GraphQLObject)]
 pub struct Step {
     pub id: Uuid,
@@ -95,4 +105,47 @@ pub async fn create_or_replace_step(
         .context(error::DBError {
             details: format!("Could not insert or update feature {}", step.id),
         })
+}
+
+pub async fn create_or_replace_step_from_gherkin(
+    step: gherkin_rust::Step,
+    scenario: &Uuid,
+    context: &gql::Context,
+) -> Result<Step, error::Error> {
+    debug!(
+        context.logger,
+        "Creating or Updating Step from gherkin: {} / {:?} / {:?}",
+        step.value,
+        step.ty,
+        step.docstring
+    );
+
+    let id = Uuid::new_v4();
+
+    let res: Step = sqlx::query_as("SELECT * FROM main.create_or_replace_step($1, $2, $3, $4)")
+        .bind(id)
+        .bind(StepType::from(step.ty))
+        .bind(step.value.clone())
+        .bind(step.docstring.unwrap_or(String::from("")))
+        .fetch_one(&context.pool)
+        .await
+        .context(error::DBError {
+            details: format!("Could not insert or update step '{}'", step.value),
+        })?;
+
+    debug!(context.logger, "Inserted step '{}'", step.value);
+
+    let _idts: IdTimestamp = sqlx::query_as("SELECT * FROM main.add_step_to_scenario($1, $2)")
+        .bind(scenario)
+        .bind(id)
+        .fetch_one(&context.pool)
+        .await
+        .context(error::DBError {
+            details: format!(
+                "Could not associate step '{}' to scenario '{}'",
+                id, scenario
+            ),
+        })?;
+
+    Ok(res)
 }
