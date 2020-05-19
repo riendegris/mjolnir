@@ -11,6 +11,7 @@ pub struct MyWorld {
     id: Uuid,              // id of the feature returned by the loading operation.
     name: String,          // name of the feature returned by fetching the feature back.
     scenario_count: usize, // count of scenarios returned by fetching scenarios.
+    step_count: usize,
 }
 
 impl cucumber_rust::World for MyWorld {}
@@ -33,6 +34,7 @@ impl std::default::Default for MyWorld {
             id: Uuid::new_v4(), // this value will get overwritten
             name: String::new(),
             scenario_count: 0,
+            step_count: 0,
         }
     }
 }
@@ -208,12 +210,84 @@ mod example_steps {
             });
         };
 
-        then r#"I can find that feature and verify its name"# |world, __step| {
+        when r#"I search for the steps belonging to the first scenario"# |world, _step| {
+
+            // Now we use the id we got in the 'given' step as a key for searching the feature
+            let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
+            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.to_string()));
+            // Again we use a runtime for running async code
+            let mut rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                let (res, errs) = juniper::execute(
+                    r#"query($id: Uuid!) {
+                        scenarios(id: $id) {
+                            id, name
+                        }
+                    }"#,
+                    None,
+                    &mjolnir::schema(),
+                    &variables,
+                    &world.context
+                    ).await.unwrap();
+
+                if !errs.is_empty() {
+                    for err in errs {
+                      warn!(world.context.logger, "{:?}", err);
+                    }
+                    assert!(false, "errors occured while executing a graphql statement for searching scenarios")
+                }
+
+                // Here we extract the id of the first scenario.
+                let id = res.as_object_value().unwrap()
+                    .get_field_value("scenarios").unwrap()
+                    .as_list_value().unwrap()[0]
+                    .as_object_value().unwrap()
+                    .get_field_value("id").unwrap()
+                    .as_string_value().unwrap();
+
+                // Now we call graphql to get the list of steps belonging to the scenario with that
+                // id.
+                let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
+                variables.insert(String::from("id"), juniper::InputValue::scalar(id));
+
+                let (res, errs) = juniper::execute(
+                    r#"query($id: Uuid!) {
+                        steps(id: $id) {
+                            id, value
+                        }
+                    }"#,
+                    None,
+                    &mjolnir::schema(),
+                    &variables,
+                    &world.context
+                    ).await.unwrap();
+
+                if !errs.is_empty() {
+                    for err in errs {
+                      warn!(world.context.logger, "{:?}", err);
+                    }
+                    assert!(false, "errors occured while executing a graphql statement for searching steps")
+                }
+
+                // this time we store the count of steps
+                world.step_count = res.as_object_value().unwrap()
+                    .get_field_value("steps").unwrap()
+                    .as_list_value().unwrap()
+                    .len();
+
+            });
+        };
+
+        then r#"I find that feature and verify its name"# |world, __step| {
             assert_eq!(world.name, world.feature.name);
         };
 
-        then r#"I can find that I have the correct number of scenarios"# |world, __step| {
+        then r#"I find that I have the correct number of scenarios"# |world, __step| {
             assert_eq!(world.scenario_count, world.feature.scenarios.len());
+        };
+
+        then r#"I find that I have the correct number of steps"# |world, __step| {
+            assert_eq!(world.step_count, world.feature.scenarios[0].steps.len());
         };
     });
 }

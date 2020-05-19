@@ -70,24 +70,22 @@ pub async fn fetch_step_by_id(id: &Uuid, context: &gql::Context) -> Result<Step,
     })
 }
 
-pub async fn fetch_step_by_scenario_id(
+pub async fn fetch_steps_by_scenario_id(
     id: &Uuid,
     context: &gql::Context,
 ) -> Result<Vec<Step>, error::Error> {
-    debug!(context.logger, "Fetching scenarios from feature '{}'", id);
-    // We select everything except search which is a created field.
+    debug!(context.logger, "Fetching steps from feature '{}'", id);
     sqlx::query_as(
         "SELECT st.id, st.step_type, st.value, st.docstring, st.created_at, st.updated_at FROM main.steps AS st
          INNER JOIN main.scenario_step_map AS map ON map.step = st.id
-         INNER JOIN main.scenario as sc ON map.scenario = sc.id
+         INNER JOIN main.scenarios as sc ON map.scenario = sc.id
          WHERE sc.id = $1"
     )
     .bind(id)
     .fetch_all(&context.pool)
     .await
-    .map(Into::<Vec<Step>>::into)
     .context(error::DBError {
-        details: "Could not retrieve features",
+        details: "Could not retrieve steps",
     })
 }
 

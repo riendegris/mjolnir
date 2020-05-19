@@ -84,6 +84,14 @@ impl Query {
             .await
             .map_err(IntoFieldError::into_field_error)
     }
+
+    /// Return the steps belonging to the scenario specified by the given id.
+    async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
+        debug!(context.logger, "Fetching steps from feature id '{}'", id);
+        features::step::fetch_steps_by_scenario_id(&id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
 }
 
 pub struct Mutation;
