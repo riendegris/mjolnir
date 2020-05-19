@@ -73,7 +73,7 @@ after!(an_after_fn => |_scenario| {
 fn setup() {}
 
 cucumber! {
-    features: "./tests/data",
+    features: "./features",
     world: ::MyWorld,
     steps: &[
         example_steps::steps
