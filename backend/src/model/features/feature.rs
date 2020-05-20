@@ -72,7 +72,7 @@ pub async fn create_or_replace_feature(
     tags: Vec<String>,
     context: &gql::Context,
 ) -> Result<Feature, error::Error> {
-    debug!(context.logger, "Creating or Updating Feature '{}'", name);
+    debug!(context.logger, "Creating or Replacing Feature '{}'", name);
     sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
         .bind(id)
         .bind(name.clone())
@@ -89,13 +89,22 @@ pub async fn create_or_replace_feature_from_string(
     feature: String,
     context: &gql::Context,
 ) -> Result<Feature, error::Error> {
-    debug!(context.logger, "Creating or Updating Feature from string");
+    debug!(context.logger, "Creating or Replacing Feature from string");
 
     let feature = gherkin_rust::Feature::parse(feature).context(error::GherkinError {
         details: String::from("Could not parse feature"),
     })?;
 
     let id = Uuid::new_v4();
+
+    debug!(
+        context.logger,
+        "Inserting Feature '{}' | '{}' | '{}' | '{}'",
+        id,
+        feature.name,
+        feature.description.clone().unwrap_or(String::from("")),
+        feature.tags.join(", ")
+    );
 
     let res = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
         .bind(id)
@@ -108,6 +117,7 @@ pub async fn create_or_replace_feature_from_string(
             details: format!("Could not create or replace feature"),
         })?;
 
+    debug!(context.logger, "Inserted Feature");
     // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
     // which we can use try_for_each and insert them in the database
     stream::iter(feature.scenarios.into_iter().map(|scenario| Ok(scenario)))
@@ -127,7 +137,7 @@ pub async fn create_or_replace_feature_from_gherkin(
     feature: gherkin_rust::Feature,
     context: &gql::Context,
 ) -> Result<Feature, error::Error> {
-    debug!(context.logger, "Creating or Updating Feature from gherkin");
+    debug!(context.logger, "Creating or Replacing Feature from gherkin");
 
     let id = Uuid::new_v4();
 

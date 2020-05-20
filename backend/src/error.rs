@@ -30,7 +30,7 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("DB Connection Error: {} => {}", details, source))]
+    #[snafu(display("DB Error: {} => {}", details, source))]
     #[snafu(visibility(pub))]
     DBError {
         details: String,
@@ -66,11 +66,16 @@ pub enum Error {
 impl IntoFieldError for Error {
     fn into_field_error(self) -> FieldError {
         match self {
-            Error::UserError { details, .. } => {
-                FieldError::new("User Error", graphql_value!({ "internal_error": details }))
+            err @ Error::UserError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new("User Error", graphql_value!({ "internal_error": errmsg }))
             }
-            Error::DBError { details, .. } => {
-                FieldError::new("User Error", graphql_value!({ "internal_error": details }))
+            err @ Error::DBError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new(
+                    "Database Error",
+                    graphql_value!({ "internal_error": errmsg }),
+                )
             }
             _ => FieldError::new("Go Figure!", graphql_value!({ "internal_error": "sol" })),
         }

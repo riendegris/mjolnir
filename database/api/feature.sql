@@ -40,6 +40,11 @@ CREATE OR REPLACE FUNCTION main.create_or_replace_feature (
 AS $$
 DECLARE
   res main.return_feature_type;
+  v_state   TEXT;
+  v_msg     TEXT;
+  v_detail  TEXT;
+  v_hint    TEXT;
+  v_context TEXT;
 BEGIN
   INSERT INTO main.features VALUES (
       $1  -- id
@@ -55,6 +60,21 @@ BEGIN
         , updated_at = NOW();
   SELECT id, name, description, tags, created_at, updated_at FROM main.features WHERE id = $1 INTO res;
   RETURN res;
+  EXCEPTION
+  WHEN others THEN
+      GET STACKED DIAGNOSTICS
+          v_state   = RETURNED_SQLSTATE,
+          v_msg     = MESSAGE_TEXT,
+          v_detail  = PG_EXCEPTION_DETAIL,
+          v_hint    = PG_EXCEPTION_HINT,
+          v_context = PG_EXCEPTION_CONTEXT;
+      RAISE NOTICE E'Got exception:
+          state  : %
+          message: %
+          detail : %
+          hint   : %
+          context: %', v_state, v_msg, v_detail, v_hint, v_context;
+      RETURN NULL;
 END;
 $$
 LANGUAGE plpgsql;
