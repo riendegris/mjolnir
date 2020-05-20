@@ -17,3 +17,6 @@ Feature: Searching for features
     Given I am loading a feature from file './tests/data/example.feature'
     When I search for the steps belonging to the first scenario
     Then I find that I have the correct number of steps
+
+  Scenario: Loading a feature with multiple scenarios with the same name
+    Given I am loading an invalid feature from file './tests/data/invalid.feature'

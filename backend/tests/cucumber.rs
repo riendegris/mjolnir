@@ -1,14 +1,14 @@
 use cucumber_rust::{after, before, cucumber};
 use futures::TryFutureExt;
 use gherkin_rust::Feature;
-use slog::{o, Drain};
+use slog::{o, warn, Drain};
 use tokio::runtime::Runtime;
 use uuid::Uuid;
 
 pub struct MyWorld {
     context: mjolnir::gql::Context,
     feature: Feature,      // feature, as read from file.
-    id: Uuid,              // id of the feature returned by the loading operation.
+    id: Option<Uuid>,      // id of the feature returned by the loading operation.
     name: String,          // name of the feature returned by fetching the feature back.
     scenario_count: usize, // count of scenarios returned by fetching scenarios.
     step_count: usize,
@@ -31,7 +31,7 @@ impl std::default::Default for MyWorld {
                 span: (0, 0),
             },
             context,
-            id: Uuid::new_v4(), // this value will get overwritten
+            id: None, // feature id
             name: String::new(),
             scenario_count: 0,
             step_count: 0,
@@ -39,6 +39,46 @@ impl std::default::Default for MyWorld {
     }
 }
 
+impl Drop for MyWorld {
+    fn drop(&mut self) {
+        // Before dropping MyWorld, we'll remove the feature from the database.
+        if self.id.is_none() {
+            return;
+        }
+        let mut variables: juniper::Variables<juniper::DefaultScalarValue> =
+            juniper::Variables::new();
+        variables.insert(
+            String::from("id"),
+            juniper::InputValue::scalar(self.id.unwrap().to_string()),
+        );
+
+        // Again we use a runtime for running async code
+        let mut rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let (_res, errs) = juniper::execute(
+                r#"mutation($id: Uuid!) {
+                    deleteFeature(id: $id) {
+                        id, name
+                    }
+                }"#,
+                None,
+                &mjolnir::schema(),
+                &variables,
+                &self.context,
+            )
+            .await
+            .unwrap();
+
+            if !errs.is_empty() {
+                warn!(
+                    self.context.logger,
+                    "Could not drop feature '{}'",
+                    self.id.unwrap()
+                );
+            }
+        });
+    }
+}
 // #[tokio::main]
 // async fn main() {
 //     let output = DebugOutput::new();
@@ -127,15 +167,46 @@ mod example_steps {
 
                 // and extract the id of the feature to store it in the world
                 info!(world.context.logger, "{}", res);
-                world.id = uuid::Uuid::parse_str(
+                world.id = Some(uuid::Uuid::parse_str(
                     res.as_object_value().unwrap()
                     .get_field_value("loadFeature").unwrap()
                     .as_object_value().unwrap()
                     .get_field_value("id").unwrap()
                     .as_string_value().unwrap()
-                    ).unwrap();
+                    ).unwrap());
 
                 // assert!(false);
+            });
+
+        };
+
+        given regex r#"^I am loading an invalid feature from file '(.*)'$"# (String) |world, filename, _step| {
+            // We read the feature from file, use gherkin to turn it into a feature.
+            let filepath = PathBuf::from(filename);
+            world.feature = Feature::parse_path(filepath.as_path()).unwrap();
+
+            let feature = std::fs::read_to_string(filepath).unwrap();
+            // Then we extract a few values from that feature, and prepare a GraphQL statement.
+            let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
+            variables.insert(String::from("feature"), juniper::InputValue::scalar(feature));
+
+            // Using GraphQL is in the async world, so we need a runtime...
+            let mut rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                // execute the graphql statement.
+                let (_res, errs) = juniper::execute(
+                    r#"mutation($feature: String!) {
+                        loadFeature(feature: $feature) {
+                            id, updatedAt
+                        }
+                    }"#,
+                    None,
+                    &mjolnir::schema(),
+                    &variables,
+                    &world.context
+                    ).await.unwrap();
+
+                assert!(!errs.is_empty(), "loading an invalid feature should produce an error");
             });
 
         };
@@ -143,7 +214,7 @@ mod example_steps {
         when r#"I search for the feature by id"# |world, _step| {
             // Now we use the id we got in the 'given' step as a key for searching the feature
             let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
-            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.to_string()));
+            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.unwrap().to_string()));
             // Again we use a runtime for running async code
             let mut rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
@@ -179,7 +250,7 @@ mod example_steps {
         when r#"I search for the scenarios by id"# |world, _step| {
             // Now we use the id we got in the 'given' step as a key for searching the feature
             let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
-            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.to_string()));
+            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.unwrap().to_string()));
             // Again we use a runtime for running async code
             let mut rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
@@ -214,7 +285,7 @@ mod example_steps {
 
             // Now we use the id we got in the 'given' step as a key for searching the feature
             let mut variables: juniper::Variables<juniper::DefaultScalarValue> = juniper::Variables::new();
-            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.to_string()));
+            variables.insert(String::from("id"), juniper::InputValue::scalar(world.id.unwrap().to_string()));
             // Again we use a runtime for running async code
             let mut rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {

@@ -58,3 +58,17 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION main.delete_feature (
+    _id          UUID      -- id          (1)
+) RETURNS main.return_feature_type
+AS $$
+DECLARE
+  res main.return_feature_type;
+BEGIN
+  DELETE FROM main.features WHERE id = $1
+  RETURNING id, name, description, tags, created_at, updated_at INTO res;
+  RETURN res;
+END;
+$$
+LANGUAGE plpgsql;

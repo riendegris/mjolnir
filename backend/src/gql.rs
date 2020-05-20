@@ -214,4 +214,15 @@ impl Mutation {
             .await
             .map_err(IntoFieldError::into_field_error)
     }
+
+    async fn delete_feature(
+        id: Uuid,
+        context: &Context,
+    ) -> FieldResult<features::feature::Feature> {
+        debug!(context.logger, "Dropping Feature '{}'", id);
+
+        features::feature::delete_feature_by_id(id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
 }

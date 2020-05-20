@@ -23,7 +23,7 @@ ALTER TABLE main.features OWNER TO odin;
 
 CREATE TABLE main.scenarios (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
-  feature UUID REFERENCES main.features(id),
+  feature UUID REFERENCES main.features(id) ON DELETE CASCADE,
   name VARCHAR(256) NOT NULL,
   tags TEXT[] DEFAULT '{}',
   search TSVECTOR GENERATED ALWAYS AS (
@@ -33,16 +33,18 @@ CREATE TABLE main.scenarios (
     )::tsvector
   ) STORED,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (feature, name) -- We cannot have multiple scenarios with the same name under one feature
 );
 
 ALTER TABLE main.scenarios OWNER TO odin;
 
 CREATE TABLE main.backgrounds (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
-  feature UUID REFERENCES main.features(id),
+  feature UUID REFERENCES main.features(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (feature) -- A feature can have only at most one background
 );
 
 ALTER TABLE main.backgrounds OWNER TO odin;
@@ -59,16 +61,16 @@ CREATE TABLE main.steps (
 ALTER TABLE main.steps OWNER TO odin;
 
 CREATE TABLE main.background_step_map (
-  background UUID REFERENCES main.backgrounds(id),
-  step UUID REFERENCES main.steps(id),
+  background UUID REFERENCES main.backgrounds(id) ON DELETE CASCADE,
+  step UUID REFERENCES main.steps(id) ON DELETE CASCADE,
   PRIMARY KEY (background, step)
 );
 
 ALTER TABLE main.background_step_map OWNER TO odin;
 
 CREATE TABLE main.scenario_step_map (
-  scenario UUID REFERENCES main.scenarios(id),
-  step UUID REFERENCES main.steps(id),
+  scenario UUID REFERENCES main.scenarios(id) ON DELETE CASCADE,
+  step UUID REFERENCES main.steps(id) ON DELETE CASCADE,
   PRIMARY KEY (scenario, step)
 );
 

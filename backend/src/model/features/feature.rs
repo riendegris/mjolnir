@@ -154,3 +154,18 @@ pub async fn create_or_replace_feature_from_gherkin(
 
     Ok(res)
 }
+
+pub async fn delete_feature_by_id(
+    id: Uuid,
+    context: &gql::Context,
+) -> Result<Feature, error::Error> {
+    debug!(context.logger, "Deleting feature with id '{}'", id);
+    // We select everything except search which is a created field.
+    sqlx::query_as("SELECT * FROM main.delete_feature($1)")
+        .bind(id)
+        .fetch_one(&context.pool)
+        .await
+        .context(error::DBError {
+            details: "Could not delete feature",
+        })
+}
