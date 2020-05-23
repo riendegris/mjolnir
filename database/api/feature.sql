@@ -32,10 +32,9 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION main.create_or_replace_feature (
-    _id          UUID      -- id          (1)
-  , _name        TEXT      -- name        (2)
-  , _description TEXT      -- description (3)
-  , _tags        TEXT[]    -- tags        (4)
+    _name        TEXT      -- name        (1)
+  , _description TEXT      -- description (2)
+  , _tags        TEXT[]    -- tags        (3)
 ) RETURNS main.return_feature_type
 AS $$
 DECLARE
@@ -46,19 +45,17 @@ DECLARE
   v_hint    TEXT;
   v_context TEXT;
 BEGIN
-  INSERT INTO main.features VALUES (
-      $1  -- id
-    , $2  -- name
-    , $3  -- description
-    , $4  -- tags
+  INSERT INTO main.features (name, description, tags) VALUES (
+      $1  -- name
+    , $2  -- description
+    , $3  -- tags
   )
-  ON CONFLICT (id) DO
+  ON CONFLICT (name) DO
     UPDATE
-    SET   name = EXCLUDED.name
-        , description = EXCLUDED.description
+    SET   description = EXCLUDED.description
         , tags = EXCLUDED.tags
-        , updated_at = NOW();
-  SELECT id, name, description, tags, created_at, updated_at FROM main.features WHERE id = $1 INTO res;
+        , updated_at = NOW()
+  RETURNING id, name, description, tags, created_at, updated_at INTO res;
   RETURN res;
   EXCEPTION
   WHEN others THEN

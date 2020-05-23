@@ -83,15 +83,9 @@ impl Mutation {
     ) -> FieldResult<features::feature::Feature> {
         debug!(context.logger, "Adding Feature {}", name);
 
-        features::feature::create_or_replace_feature(
-            uuid::Uuid::new_v4(),
-            name,
-            description,
-            tags,
-            &context,
-        )
-        .await
-        .map_err(IntoFieldError::into_field_error)
+        features::feature::create_or_replace_feature(name, description, tags, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
     }
 
     async fn load_feature(

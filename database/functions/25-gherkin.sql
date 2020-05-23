@@ -5,12 +5,12 @@ CREATE TYPE main.step_type AS ENUM ('given', 'when', 'then');
 
 CREATE TABLE main.features (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
-  name VARCHAR(256) NOT NULL,
+  name VARCHAR(256) UNIQUE NOT NULL,
   description TEXT,
   tags TEXT[] DEFAULT '{}',
   search TSVECTOR GENERATED ALWAYS AS (
     (
-      setweight(to_tsvector('english', public.textarr2text(tags)), 'A') || ' ' ||
+      setweight(to_tsvector('english', public.array2string(tags)), 'A') || ' ' ||
       setweight(to_tsvector('english', name), 'B') || ' ' ||
       setweight(to_tsvector('english', description), 'C')
     )::tsvector
@@ -28,7 +28,7 @@ CREATE TABLE main.scenarios (
   tags TEXT[] DEFAULT '{}',
   search TSVECTOR GENERATED ALWAYS AS (
     (
-      setweight(to_tsvector('english', public.textarr2text(tags)), 'A') || ' ' ||
+      setweight(to_tsvector('english', public.array2string(tags)), 'A') || ' ' ||
       setweight(to_tsvector('english', name), 'B')
     )::tsvector
   ) STORED,

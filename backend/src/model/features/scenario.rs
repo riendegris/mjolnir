@@ -72,13 +72,37 @@ pub async fn fetch_scenarios_by_feature_id(
     })
 }
 
-pub async fn create_or_replace_scenario(
-    scenario: &Scenario,
-    feature_id: &Uuid, // owns the scenario
+// pub async fn create_or_replace_scenario(
+//     scenario: &Scenario,
+//     feature_id: &Uuid, // owns the scenario
+//     context: &gql::Context,
+// ) -> Result<IdTimestamp, error::Error> {
+//     sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4, $5)")
+//         .bind(scenario.id)
+//         .bind(scenario.name.clone())
+//         .bind(
+//             scenario
+//                 .tags
+//                 .iter()
+//                 .map(|tag| tag.clone())
+//                 .collect::<Vec<String>>(),
+//         )
+//         .bind(feature_id)
+//         .fetch_one(&context.pool)
+//         .await
+//         .context(error::DBError {
+//             details: format!("Could not insert or update feature {}", scenario.id),
+//         })
+// }
+
+pub async fn create_or_replace_scenario_from_gherkin(
+    scenario: gherkin_rust::Scenario,
+    feature: &Uuid,
     context: &gql::Context,
-) -> Result<IdTimestamp, error::Error> {
-    sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4, $5)")
-        .bind(scenario.id)
+) -> Result<Scenario, error::Error> {
+    debug!(context.logger, "Creating Scenario from gherkin");
+
+    let res: Scenario = sqlx::query_as("SELECT * FROM main.create_scenario($1, $2, $3)")
         .bind(scenario.name.clone())
         .bind(
             scenario
@@ -87,40 +111,14 @@ pub async fn create_or_replace_scenario(
                 .map(|tag| tag.clone())
                 .collect::<Vec<String>>(),
         )
-        .bind(feature_id)
+        .bind(feature)
         .fetch_one(&context.pool)
         .await
         .context(error::DBError {
-            details: format!("Could not insert or update feature {}", scenario.id),
-        })
-}
+            details: format!("Could not create scenario '{}'", scenario.name),
+        })?;
 
-pub async fn create_or_replace_scenario_from_gherkin(
-    scenario: gherkin_rust::Scenario,
-    feature: &Uuid,
-    context: &gql::Context,
-) -> Result<Scenario, error::Error> {
-    debug!(context.logger, "Creating or Updating Scenario from gherkin");
-
-    let id = Uuid::new_v4();
-
-    let res: Scenario =
-        sqlx::query_as("SELECT * FROM main.create_or_replace_scenario($1, $2, $3, $4)")
-            .bind(id)
-            .bind(scenario.name.clone())
-            .bind(
-                scenario
-                    .tags
-                    .iter()
-                    .map(|tag| tag.clone())
-                    .collect::<Vec<String>>(),
-            )
-            .bind(feature)
-            .fetch_one(&context.pool)
-            .await
-            .context(error::DBError {
-                details: format!("Could not insert or update scenario '{}'", scenario.name),
-            })?;
+    let id = res.id;
 
     // Here we're turning the scenario's steps into a stream of Result<Step, _>, on
     // which we can use try_for_each and insert them in the database

@@ -8,29 +8,85 @@ CREATE TYPE main.return_scenario_type AS (
 );
 
 CREATE OR REPLACE FUNCTION main.create_or_replace_scenario (
-    _id UUID      -- scenario id (1)
-  , _name TEXT    -- name        (2)
-  , _tags TEXT[]  -- tags        (3)
-  , _feature UUID -- feature id  (4)
+    _name    TEXT    -- name        (1)
+  , _tags    TEXT[]  -- tags        (2)
+  , _feature UUID    -- feature id  (3)
 ) RETURNS main.return_scenario_type
 AS $$
 DECLARE
   res main.return_scenario_type;
+  v_state   TEXT;
+  v_msg     TEXT;
+  v_detail  TEXT;
+  v_hint    TEXT;
+  v_context TEXT;
 BEGIN
-  INSERT INTO main.scenarios VALUES (
-      $1 -- id
-    , $4 -- feature
-    , $2 -- name
-    , $3 -- tags
+  INSERT INTO main.scenarios (name, tags, feature) VALUES (
+      $1 -- name
+    , $2 -- tags
+    , $3 -- feature
   )
-  ON CONFLICT (id) DO
+  ON CONFLICT (feature, name) DO
     UPDATE
-    SET   name = EXCLUDED.name
-        , feature = EXCLUDED.feature
-        , tags = EXCLUDED.tags
-        , updated_at = NOW();
-  SELECT id, name, tags, created_at, updated_at FROM main.scenarios WHERE id = $1 INTO res;
+    SET   tags = EXCLUDED.tags
+        , updated_at = NOW()
+  RETURNING id, name, tags, created_at, updated_at INTO res;
   RETURN res;
+  EXCEPTION
+  WHEN others THEN
+      GET STACKED DIAGNOSTICS
+          v_state   = RETURNED_SQLSTATE,
+          v_msg     = MESSAGE_TEXT,
+          v_detail  = PG_EXCEPTION_DETAIL,
+          v_hint    = PG_EXCEPTION_HINT,
+          v_context = PG_EXCEPTION_CONTEXT;
+      RAISE NOTICE E'Got exception:
+          state  : %
+          message: %
+          detail : %
+          hint   : %
+          context: %', v_state, v_msg, v_detail, v_hint, v_context;
+      RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION main.create_scenario (
+    _name    TEXT    -- name        (1)
+  , _tags    TEXT[]  -- tags        (2)
+  , _feature UUID    -- feature id  (3)
+) RETURNS main.return_scenario_type
+AS $$
+DECLARE
+  res main.return_scenario_type;
+  v_state   TEXT;
+  v_msg     TEXT;
+  v_detail  TEXT;
+  v_hint    TEXT;
+  v_context TEXT;
+BEGIN
+  INSERT INTO main.scenarios (name, tags, feature) VALUES (
+      $1 -- name
+    , $2 -- tags
+    , $3 -- feature
+  )
+  RETURNING id, name, tags, created_at, updated_at INTO res;
+  RETURN res;
+  -- EXCEPTION
+  -- WHEN others THEN
+  --     GET STACKED DIAGNOSTICS
+  --         v_state   = RETURNED_SQLSTATE,
+  --         v_msg     = MESSAGE_TEXT,
+  --         v_detail  = PG_EXCEPTION_DETAIL,
+  --         v_hint    = PG_EXCEPTION_HINT,
+  --         v_context = PG_EXCEPTION_CONTEXT;
+  --     RAISE NOTICE E'Got exception:
+  --         state  : %
+  --         message: %
+  --         detail : %
+  --         hint   : %
+  --         context: %', v_state, v_msg, v_detail, v_hint, v_context;
+  --     RETURN NULL;
 END;
 $$
 LANGUAGE plpgsql;

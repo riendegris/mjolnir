@@ -66,15 +66,13 @@ pub async fn fetch_feature_by_id(
 }
 
 pub async fn create_or_replace_feature(
-    id: Uuid,
     name: String,
     description: String,
     tags: Vec<String>,
     context: &gql::Context,
 ) -> Result<Feature, error::Error> {
     debug!(context.logger, "Creating or Replacing Feature '{}'", name);
-    sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
-        .bind(id)
+    sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3)")
         .bind(name.clone())
         .bind(description)
         .bind(tags)
@@ -95,19 +93,15 @@ pub async fn create_or_replace_feature_from_string(
         details: String::from("Could not parse feature"),
     })?;
 
-    let id = Uuid::new_v4();
-
     debug!(
         context.logger,
-        "Inserting Feature '{}' | '{}' | '{}' | '{}'",
-        id,
+        "Inserting Feature '{}' | '{}' | '{}'",
         feature.name,
         feature.description.clone().unwrap_or(String::from("")),
         feature.tags.join(", ")
     );
 
-    let res = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
-        .bind(id)
+    let res: Feature = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3)")
         .bind(feature.name)
         .bind(feature.description.unwrap_or(String::from("")))
         .bind(feature.tags)
@@ -116,6 +110,8 @@ pub async fn create_or_replace_feature_from_string(
         .context(error::DBError {
             details: format!("Could not create or replace feature"),
         })?;
+
+    let id = res.id;
 
     debug!(context.logger, "Inserted Feature");
     // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
@@ -139,10 +135,7 @@ pub async fn create_or_replace_feature_from_gherkin(
 ) -> Result<Feature, error::Error> {
     debug!(context.logger, "Creating or Replacing Feature from gherkin");
 
-    let id = Uuid::new_v4();
-
-    let res = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3, $4)")
-        .bind(id)
+    let res: Feature = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3)")
         .bind(feature.name)
         .bind(feature.description.unwrap_or(String::from("")))
         .bind(feature.tags)
@@ -151,6 +144,8 @@ pub async fn create_or_replace_feature_from_gherkin(
         .context(error::DBError {
             details: format!("Could not create or replace feature"),
         })?;
+
+    let id = res.id;
 
     // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
     // which we can use try_for_each and insert them in the database

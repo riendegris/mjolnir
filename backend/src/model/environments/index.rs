@@ -44,7 +44,7 @@ pub struct Index {
     pub signature: String,
     pub index_type: String,
     pub data_source: String,
-    pub region: String,
+    pub region: Vec<String>,
     pub filepath: String,
     pub status: IndexStatus,
     pub created_at: DateTime<Utc>,
@@ -70,7 +70,7 @@ impl<'c> FromRow<'c, PgRow<'c>> for Index {
 async fn step_analysis(
     index_type: &str,
     data_source: &str,
-    region: &str,
+    region: &[&str],
     scenario: &Uuid,
     context: &gql::Context,
 ) -> Result<(), error::Error> {
@@ -78,24 +78,31 @@ async fn step_analysis(
     validate_data_source(data_source, context).await?;
     validate_data_source_with_index_type(data_source, index_type, context).await?;
 
-    let signature = format!("{}-{}-{}", index_type, data_source, region);
+    let index: Index = sqlx::query_as("SELECT * FROM main.create_or_replace_index($1, $2, $3)")
+        .bind(index_type)
+        .bind(data_source)
+        .bind(region)
+        .fetch_one(&context.pool)
+        .await
+        .context(error::DBError {
+            details: format!("Could not retrieve index type '{}'", index_type),
+        })?;
 
-    let id = Uuid::new_v4();
-
-    let index: Index =
-        sqlx::query_as("SELECT * FROM main.create_or_replace_index($1, $2, $3, $4, $5)")
-            .bind(id)
-            .bind(signature)
-            .bind(index_type)
-            .bind(data_source)
-            .bind(region)
+    // Now we need to attach this Index to an environment, and the environment to a scenario.
+    let environment =
+        sqlx::query("SELECT environment FROM main.scenario_environment_map WHERE scenario = $1")
+            .bind(scenario)
+            .try_map(|row: PgRow| row.try_get::<Uuid, _>(0))
             .fetch_one(&context.pool)
             .await
             .context(error::DBError {
-                details: format!("Could not retrieve index type '{}'", index_type),
+                details: format!(
+                    "Could not retrieve environment id from scenario'{}'",
+                    scenario
+                ),
             })?;
 
-    // Now we need to attach this Index to an environment, and the environment to a scenario.
+    // How do we attach the index to the environment? Should it replace it?
     Ok(())
 }
 

@@ -31,7 +31,7 @@ ALTER TABLE main.index_type_data_source OWNER TO odin;
 
 CREATE TABLE main.environments (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
-  signature VARCHAR(256) NOT NULL DEFAULT '',
+  signature TEXT CONSTRAINT unique_environment_signature UNIQUE DEFAULT public.random_signature(),
   status main.index_status NOT NULL DEFAULT 'not_available',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -49,18 +49,31 @@ ALTER TABLE main.scenario_environment_map OWNER TO odin;
 
 CREATE TABLE main.indexes (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
-  signature VARCHAR(256) UNIQUE NOT NULL,
-  index_type VARCHAR(256) REFERENCES main.index_types(id) ON DELETE CASCADE,
-  data_source VARCHAR(256) REFERENCES main.data_sources(id) ON DELETE CASCADE,
-  region VARCHAR(256),
+  index_type VARCHAR(32) REFERENCES main.index_types(id) ON DELETE CASCADE,
+  data_source VARCHAR(32) REFERENCES main.data_sources(id) ON DELETE CASCADE,
+  regions VARCHAR(32)[],
+  signature TEXT
+    GENERATED ALWAYS AS (MD5(index_type || '-' || data_source || '-' || public.array2string(regions))) STORED
+    CONSTRAINT unique_index_signature UNIQUE,
   filepath VARCHAR(256),
   status main.index_status NOT NULL DEFAULT 'not_available',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- FIXME This constraints is used to make sure that the data source is compatible with the index type.
   -- FOREIGN KEY (index_type, data_source) REFERENCES main.index_type_data_source (index_type, data_source)
-  UNIQUE (index_type, data_source, region)
+  -- TODO The following is redundant with the unique_index_signature, so maybe remove it.
+  -- Test with and without...
+  UNIQUE (index_type, data_source, regions)
 );
 
 ALTER TABLE main.indexes OWNER TO odin;
+
+CREATE TABLE main.environment_index_map (
+  environment UUID REFERENCES main.environments(id) ON DELETE CASCADE,
+  index_id UUID REFERENCES main.indexes(id) ON DELETE CASCADE,
+  PRIMARY KEY (environment, index_id)
+);
+
+ALTER TABLE main.environment_index_map OWNER TO odin;
+
 
