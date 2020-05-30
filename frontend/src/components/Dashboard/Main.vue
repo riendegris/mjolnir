@@ -1,5 +1,5 @@
 <template>
-  <main class="main bg-blue-400">
+    <main class="main bg-blue-600">
     <MainOverview />
     <MainHeader />
     <MainPanel />

@@ -1,7 +1,13 @@
 <template>
   <aside class="sidenav bg-blue-800 flex flex-col">
-    <ul class="sidenav__list font-header p-0 mt-16 list-none">
-      <li class="sidenav__list-item">Item One</li>
+    <ul class="font-header p-0 mt-16 list-none">
+      <li class="p-8 text-gray-500">
+        <span class="uppercase text-gray-500">Features</span>
+        <ul class="pl-4 pt-2">
+          <li>
+            <span class="text-gray-400">Check POIs nominal</span>
+          </li>
+        </ul>
       <li class="sidenav__list-item">Item Two</li>
       <li class="sidenav__list-item">Item Three</li>
       <li class="sidenav__list-item">Item Four</li>
