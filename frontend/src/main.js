@@ -4,14 +4,12 @@ import { AppRouter } from '@/router'
 import store from './store'
 
 import configureAxios from '@/api/axiosConfig'
-import configureEventSource from '@/api/eventSource'
 
 import '@/assets/styles/index.css'
 
 Vue.config.productionTip = false
 
 configureAxios()
-configureEventSource()
 
 Vue.config.productionTip = false
 
@@ -21,5 +19,5 @@ new Vue({
   store: store,
   router: AppRouter,
   components: { App },
-  template: '<App/>'
+  render: h => h(App)
 })
