@@ -12,8 +12,11 @@
           </button>
         </div>
         <ul class="pl-4 pt-2">
+          <!--<li>
+            <button class="text-gray-400 text-sm" @click='switchPanel("Features")'>{{ truncate('searching for POI in a far away galaxy', 25, true) }}</button>
+          </li>-->
           <li v-for="feature in features" :key="feature.id">
-            <button class="text-gray-400" @click='switchPanel("Features")'>{{ feature.name }}</button>
+            <button class="text-gray-400 text-sm" @click='switchPanel("Features")'>{{ truncate(feature.name, 25, true) }}</button>
           </li>
         </ul>
       </li>
@@ -63,7 +66,14 @@ export default {
     ...mapActions({
       switchPanel: 'dashboard/switchPanel',
       loadFeatures: 'features/loadFeatures'
-    })
+    }),
+    truncate (str, n, useWordBoundary) {
+      if (str.length <= n) { return str }
+      const subString = str.substr(0, n - 1) // the original check
+      return (useWordBoundary
+        ? subString.substr(0, subString.lastIndexOf(' '))
+        : subString) + ' …'
+    }
   },
   async created () {
     this.loadFeatures()
