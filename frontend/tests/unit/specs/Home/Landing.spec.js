@@ -7,5 +7,4 @@ describe('Landing.vue', () => {
     const wrapper = shallowMount(Landing, {})
     expect(wrapper.text()).toMatch(msg)
   })
-
 })

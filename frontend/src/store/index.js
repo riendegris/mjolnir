@@ -3,7 +3,7 @@ import Vuex from 'vuex'
 
 import Notifications from './modules/notifications'
 import Banos from './modules/banos'
-import Test from './modules/test'
+import Dashboard from './modules/dashboard'
 
 Vue.use(Vuex)
 
@@ -13,7 +13,7 @@ export default new Vuex.Store({
   modules: {
     notifications: Notifications,
     banos: Banos,
-    test: Test
+    dashboard: Dashboard
   },
   strict: debug,
   plugins: debug ? [] : []
