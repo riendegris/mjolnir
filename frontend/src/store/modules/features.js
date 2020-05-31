@@ -84,6 +84,64 @@ const actions = {
         )
       }
     }
+  },
+  uploadFeature: async ({ dispatch, commit }, { text }) => {
+    const variables = {
+      feature: text
+    }
+    const query = ` mutation loadFeature($feature: String!) {
+      loadFeature(feature: $feature) {
+        id,
+        name,
+        description,
+        tags
+        createdAt,
+        updatedAt
+      }
+    }`
+
+    try {
+      axios({
+        method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        url: ApiRoutes.GraphQL,
+        data: JSON.stringify({
+          query: query,
+          variables: variables
+        })
+      }).then(response => {
+        const feature = response.data.data.loadFeature
+        if (feature.error) {
+          dispatch('notifications/addNotification',
+            {
+              title: 'Server Error uploading feature',
+              message: feature.error,
+              theme: 'error',
+              timeout: 5000
+            },
+            { root: true }
+          )
+        }
+        // We're not commiting this feature, because we are
+        // also subscribed to feature notifications, and so
+        // we should also get the information from there.
+        // commit('updateFeature', feature)
+      })
+    } catch (err) {
+      console.log('uploading feature error: ' + err)
+      dispatch('notifications/addNotification',
+        {
+          title: 'Error uploading feature',
+          message: err,
+          theme: 'error',
+          timeout: 5000
+        },
+        { root: true }
+      )
+    }
   }
 }
 
