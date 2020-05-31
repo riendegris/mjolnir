@@ -4,8 +4,8 @@
       <li class="p-8 text-gray-500">
         <span class="uppercase text-gray-500">Features</span>
         <ul class="pl-4 pt-2">
-          <li>
-            <button class="text-gray-400" @click='switchPanel("Features")'>Check POIs nominal</button>
+          <li v-for="feature in features" :key="feature.id">
+            <button class="text-gray-400" @click='switchPanel("Features")'>{{ feature.name }}</button>
           </li>
         </ul>
       </li>
@@ -20,7 +20,20 @@
           </li>
         </ul>
       </li>
-      <li class="sidenav__list-item">Item Two</li>
+      <li class="p-8 text-gray-500">
+        <span class="uppercase text-gray-500">Environments</span>
+        <ul class="pl-4 pt-2">
+          <li>
+            <button class="text-gray-400 text-green-500" @click='switchPanel("Environment")'>France</button>
+          </li>
+          <li>
+            <button class="text-gray-400 text-red-500" @click='switchPanel("Runs")'>Ile-de-France</button>
+          </li>
+          <li>
+            <button class="text-gray-400 text-red-500" @click='switchPanel("Runs")'>Netherlands</button>
+          </li>
+        </ul>
+      </li>
       <li class="sidenav__list-item">Item Three</li>
       <li class="sidenav__list-item">Item Four</li>
       <li class="sidenav__list-item">Item Five</li>
@@ -29,14 +42,23 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'SideNav',
+  computed: {
+    ...mapGetters({
+      features: 'features/features'
+    })
+  },
   methods: {
     ...mapActions({
-      switchPanel: 'dashboard/switchPanel'
+      switchPanel: 'dashboard/switchPanel',
+      loadFeatures: 'features/loadFeatures'
     })
+  },
+  async created () {
+    this.loadFeatures()
   }
 }
 </script>

@@ -14,12 +14,12 @@ const eventSource = {
   },
   onConnectionOpen: function (event) {
     console.log(event)
-    console.log('Successfully connected to stocks notifications')
+    console.log('Successfully connected to features notifications')
     const message = `{
       "id": "1",
       "type":"start",
       "payload": {
-          "query": "subscription stocks { stocks { name, quantity, price } }"
+          "query": "subscription features { features { id, name, description, tags } }"
         }
     }`
     this.send(message)
@@ -29,11 +29,11 @@ const eventSource = {
     try {
       const json = JSON.parse(event.data)
       console.log(json)
-      store.commit('stocks/updateStock', json.payload.data.stocks)
+      store.commit('features/updateFeature', json.payload.data.features)
     } catch (err) {
       store.dispatch('notifications/addNotification',
         {
-          title: 'Error stock notification',
+          title: 'Error feature notification',
           message: err,
           theme: 'error',
           timeout: 3000

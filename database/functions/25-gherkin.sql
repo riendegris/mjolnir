@@ -21,6 +21,24 @@ CREATE TABLE main.features (
 
 ALTER TABLE main.features OWNER TO odin;
 
+CREATE OR REPLACE FUNCTION main.tg_notify_features ()
+  RETURNS TRIGGER
+  LANGUAGE plpgsqL
+AS $$
+DECLARE
+  channel TEXT := TG_ARGV[0];
+BEGIN
+  PERFORM pg_notify(channel, row_to_json(NEW)::text);
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER notify_features
+AFTER INSERT OR UPDATE
+ON main.features
+FOR EACH ROW
+  EXECUTE PROCEDURE main.tg_notify_features('features');
+
 CREATE TABLE main.scenarios (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
   feature UUID REFERENCES main.features(id) ON DELETE CASCADE,

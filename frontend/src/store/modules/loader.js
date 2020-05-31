@@ -8,7 +8,7 @@ const getters = {
   loadingStatus: state => state.loading ? 'Fetching stuff' : 'Ready'
 }
 const mutations = {
-  updateLoader: (state, status) => state.loading = status
+  updateLoader: (state, status) => { state.loading = status }
 }
 const actions = {
   executeWithLoader: async ({ commit, dispatch }, fn) => {

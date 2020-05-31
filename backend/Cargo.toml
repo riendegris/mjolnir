@@ -15,7 +15,8 @@ gherkin_rust = "0.8"
 tokio = { version = "0.2.13", features = [ "full" ] }
 futures = { version = "0.3" }
 juniper = { git="https://github.com/graphql-rust/juniper.git", features = ["chrono", "uuid"] }
-juniper_warp = { git="https://github.com/graphql-rust/juniper.git" }
+juniper_warp = { git="https://github.com/graphql-rust/juniper.git", features = ["subscriptions"] }
+juniper_subscriptions = { git="https://github.com/graphql-rust/juniper.git" }
 md-5 = "0.8"
 pretty_env_logger = "0.4"
 reqwest = "0.10.4"
@@ -37,7 +38,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "server"
-path = "src/server.rs"
+path = "src/main.rs"
 
 [[test]]
 name = "cucumber"
@@ -47,4 +48,3 @@ harness = false # Allows Cucumber to print output instead of libtest
 [dev-dependencies]
 cucumber_rust = "0.6"
 gherkin_rust = "0.8"
-# tokio = { version = "0.2.13", features = [ "full" ] }

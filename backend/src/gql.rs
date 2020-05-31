@@ -1,10 +1,13 @@
 use super::model::{environments, features};
-use juniper::{FieldResult, IntoFieldError};
-use slog::{debug, Logger};
-use sqlx::postgres::PgPool;
+use crate::get_connstr;
+use futures::Stream;
+use juniper::{FieldError, FieldResult, IntoFieldError, RootNode};
+use slog::{debug, info, Logger};
+use sqlx::postgres::{PgListener, PgPool};
+use std::pin::Pin;
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context {
     pub pool: PgPool,
     pub logger: Logger,
@@ -25,39 +28,42 @@ impl Query {
     }
 
     /// Return the feature corresponding to the given id.
-    async fn feature(
-        &self,
-        id: Uuid,
-        context: &Context,
-    ) -> FieldResult<features::feature::Feature> {
-        debug!(context.logger, "Fetching Feature with id '{}'", id);
-        features::feature::fetch_feature_by_id(id, &context)
-            .await
-            .map_err(IntoFieldError::into_field_error)
-    }
+    // Temporarily disabled
+    // async fn feature(
+    //     &self,
+    //     id: Uuid,
+    //     context: &Context,
+    // ) -> FieldResult<features::feature::Feature> {
+    //     debug!(context.logger, "Fetching Feature with id '{}'", id);
+    //     features::feature::fetch_feature_by_id(id, &context)
+    //         .await
+    //         .map_err(IntoFieldError::into_field_error)
+    // }
 
     /// Return the scenarios belonging to the feature specified by the given id.
-    async fn scenarios(
-        &self,
-        id: Uuid,
-        context: &Context,
-    ) -> FieldResult<Vec<features::scenario::Scenario>> {
-        debug!(
-            context.logger,
-            "Fetching scenarios from feature id '{}'", id
-        );
-        features::scenario::fetch_scenarios_by_feature_id(&id, &context)
-            .await
-            .map_err(IntoFieldError::into_field_error)
-    }
+    // Temporarily disabled
+    // async fn scenarios(
+    //     &self,
+    //     id: Uuid,
+    //     context: &Context,
+    // ) -> FieldResult<Vec<features::scenario::Scenario>> {
+    //     debug!(
+    //         context.logger,
+    //         "Fetching scenarios from feature id '{}'", id
+    //     );
+    //     features::scenario::fetch_scenarios_by_feature_id(&id, &context)
+    //         .await
+    //         .map_err(IntoFieldError::into_field_error)
+    // }
 
     /// Return the steps belonging to the scenario specified by the given id.
-    async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
-        debug!(context.logger, "Fetching steps from feature id '{}'", id);
-        features::step::fetch_steps_by_scenario_id(&id, &context)
-            .await
-            .map_err(IntoFieldError::into_field_error)
-    }
+    // Temporarily disabled
+    // async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
+    //     debug!(context.logger, "Fetching steps from feature id '{}'", id);
+    //     features::step::fetch_steps_by_scenario_id(&id, &context)
+    //         .await
+    //         .map_err(IntoFieldError::into_field_error)
+    // }
 
     /// Return a list of all environments
     async fn environments(
@@ -109,4 +115,41 @@ impl Mutation {
             .await
             .map_err(IntoFieldError::into_field_error)
     }
+}
+
+type FeaturesStream =
+    Pin<Box<dyn Stream<Item = Result<features::feature::Feature, FieldError>> + Send>>;
+
+pub struct Subscription;
+
+#[juniper::graphql_subscription(Context = Context)]
+impl Subscription {
+    async fn features(context: &Context) -> FeaturesStream {
+        info!(context.logger, "Subscribing to features stream");
+        let connstr = get_connstr(context.logger.clone())
+            .await
+            .expect("connection");
+        let mut listener = PgListener::new(&connstr).await.unwrap();
+        listener.listen("features").await.unwrap();
+        let logger = context.logger.clone();
+        let stream = listener.into_stream().map(move |i| {
+            let n = i.unwrap(); // FIXME
+            info!(
+                logger,
+                "Received Postgres Notification about Feature {}",
+                n.payload()
+            );
+            let feature: features::feature::Feature = serde_json::from_str(n.payload())
+                .expect("Pg Notification should send deseriazable message");
+            Ok(feature)
+        });
+
+        Box::pin(stream)
+    }
+}
+
+type Schema = RootNode<'static, Query, Mutation, Subscription>;
+
+pub fn schema() -> Schema {
+    Schema::new(Query, Mutation, Subscription)
 }

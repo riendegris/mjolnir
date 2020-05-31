@@ -36,6 +36,9 @@ module.exports = {
       }
     }
   },
+  purge: [
+    './src/components/**/*.vue'
+  ],
   variants: {},
   plugins: []
 }
