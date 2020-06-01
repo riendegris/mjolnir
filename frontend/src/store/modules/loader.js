@@ -1,23 +1,22 @@
-// dnlytras
-
 const state = {
   loading: false
 }
-const getters = {
-  loading: state => state.loading,
-  loadingStatus: state => state.loading ? 'Fetching stuff' : 'Ready'
-}
 const mutations = {
-  updateLoader: (state, status) => { state.loading = status }
+  show: (state) => { state.loading = true },
+  hide: (state) => { state.loading = false }
 }
 const actions = {
-  executeWithLoader: async ({ commit, dispatch }, fn) => {
-    commit('updateLoader', true)
-    await dispatch(fn, { root: true })
-    commit('updateLoader', false)
+  show ({ commit }) {
+    commit('show')
+  },
+  hide ({ commit }) {
+    commit('hide')
   }
 }
 
 export default {
-  state, getters, mutations, actions
+  namespaced: true,
+  state,
+  mutations,
+  actions
 }

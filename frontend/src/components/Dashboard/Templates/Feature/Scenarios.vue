@@ -13,7 +13,7 @@
       </div>
       <ul>
         <li v-for="(scenario, index) in scenarios" :key="scenario.id" class="font-header">
-           <button @click='selectIndex(index)' class="flex items-center justify-center my-4">
+           <button @click='selectIndex(index)' :class="{'selected': index == idx}" class="flex items-center justify-center my-2 p-4">
              {{ index }} - {{ truncate(scenario.name, 50, true) }}
            </button>
         </li>
@@ -35,8 +35,15 @@ export default {
   methods: {
     selectIndex (event) {
       console.log('select Index: ' + event)
+      this.idx = event
       this.$emit('selectIndex', event)
     }
   }
 }
 </script>
+
+<style>
+.selected {
+  @apply bg-red-800;
+}
+</style>

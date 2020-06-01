@@ -1,7 +1,7 @@
 <template>
   <div class="flex-grow flex flex-col">
     <div class="w-full flex justify-between bg-blue-800 p-6 text-gray-300">
-      <span class="uppercase">Scenario: </span>
+      <span class="uppercase">Scenario</span>
       <span class="ml-6">{{ truncate(scenario.name, 50, true) }}</span>
     </div>
     <div class="flex-grow flex flex-col items-center justify-start bg-blue-100">

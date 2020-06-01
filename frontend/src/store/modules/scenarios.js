@@ -60,7 +60,6 @@ const actions = {
             variables: variables
           })
         }).then(response => {
-          console.log(response)
           const scenarios = response.data.data.scenarios
           if (scenarios.error) {
             dispatch('notifications/addNotification',

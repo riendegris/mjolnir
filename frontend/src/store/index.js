@@ -7,6 +7,7 @@ import Dashboard from './modules/dashboard'
 import Features from './modules/features'
 import Scenarios from './modules/scenarios'
 import Steps from './modules/steps'
+import Loader from './modules/loader'
 
 Vue.use(Vuex)
 
@@ -19,7 +20,8 @@ export default new Vuex.Store({
     dashboard: Dashboard,
     features: Features,
     scenarios: Scenarios,
-    steps: Steps
+    steps: Steps,
+    loader: Loader
   },
   strict: debug,
   plugins: debug ? [] : []

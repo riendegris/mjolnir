@@ -1,7 +1,7 @@
 <template>
   <div class="flex-grow flex main-cards">
-    <Scenarios  :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
-    <Scenario :steps='steps' :scenario='scenario' />
+    <Scenarios class="left" :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
+    <Scenario class="right" :steps='steps' :scenario='scenario' />
   </div>
 </template>
 
@@ -37,7 +37,7 @@ export default {
   data () {
     return {
       idx: 0 // index of the scenario selected by the user, drives the Scenario component
-             // it is initialized to 0 here, but it is driven by the Scenarios component.
+      // it is initialized to 0 here, but it is driven by the Scenarios component.
     }
   },
   computed: {
@@ -52,6 +52,16 @@ export default {
     },
     scenario () {
       return this.scenarios[this.idx]
+    }
+  },
+  watch: {
+    // when scenario becomes available, we load new steps
+    scenario: function (scenario) {
+      if (scenario !== undefined) {
+        const sid = scenario.id
+        console.log('scenario id ' + sid)
+        this.loadSteps({ id: sid })
+      }
     }
   },
   methods: {
@@ -70,16 +80,17 @@ export default {
     const id = this.id
     console.log('Creating Feature with id: ' + this.id)
     this.loadScenarios({ id })
-    console.log('scenario id ' + this.scenario.id)
-    const sid = this.scenario.id
-    this.loadSteps({ id: sid })
   }
 }
 </script>
 
 <style>
-.main-cards {
-  column-count: 2;
-  column-gap: 20px;
+.left {
+  flex: 50%;
+  margin-right: 0.75rem;
+}
+.right {
+  flex: 50%;
+  margin-left: 0.75rem;
 }
 </style>
