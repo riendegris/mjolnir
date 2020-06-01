@@ -5,6 +5,8 @@ import Notifications from './modules/notifications'
 import Banos from './modules/banos'
 import Dashboard from './modules/dashboard'
 import Features from './modules/features'
+import Scenarios from './modules/scenarios'
+import Steps from './modules/steps'
 
 Vue.use(Vuex)
 
@@ -15,7 +17,9 @@ export default new Vuex.Store({
     notifications: Notifications,
     banos: Banos,
     dashboard: Dashboard,
-    features: Features
+    features: Features,
+    scenarios: Scenarios,
+    steps: Steps
   },
   strict: debug,
   plugins: debug ? [] : []

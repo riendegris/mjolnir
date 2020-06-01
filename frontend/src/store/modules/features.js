@@ -6,7 +6,11 @@ const state = {
 }
 
 const getters = {
-  features: state => state.features
+  features: state => state.features,
+  feature: (state, getters) => (id) => {
+    const i = state.features.findIndex(obj => obj.id === id)
+    return state.features[i]
+  }
 }
 
 const mutations = {

@@ -1,8 +1,8 @@
 <template>
-    <main class="main bg-blue-600">
+  <main class="main flex flex-col bg-blue-600">
     <MainOverview />
     <MainHeader />
-    <MainPanel :key='panel' :panel='panel'/>
+    <MainPanel :key='sig' :panel='panel' />
   </main>
 </template>
 
@@ -16,8 +16,15 @@ export default {
   name: 'Main',
   computed: {
     ...mapGetters({
-      panel: 'dashboard/panel'
-    })
+      panel: 'dashboard/panel',
+      key: 'dashboard/key',
+      value: 'dashboard/value'
+    }),
+    sig () {
+      const s = this.panel + '/' + this.key + '/' + this.value
+      console.log('sig: ' + s)
+      return s
+    }
   },
   components: {
     MainHeader,

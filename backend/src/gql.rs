@@ -41,29 +41,27 @@ impl Query {
     // }
 
     /// Return the scenarios belonging to the feature specified by the given id.
-    // Temporarily disabled
-    // async fn scenarios(
-    //     &self,
-    //     id: Uuid,
-    //     context: &Context,
-    // ) -> FieldResult<Vec<features::scenario::Scenario>> {
-    //     debug!(
-    //         context.logger,
-    //         "Fetching scenarios from feature id '{}'", id
-    //     );
-    //     features::scenario::fetch_scenarios_by_feature_id(&id, &context)
-    //         .await
-    //         .map_err(IntoFieldError::into_field_error)
-    // }
+    async fn scenarios(
+        &self,
+        id: Uuid,
+        context: &Context,
+    ) -> FieldResult<Vec<features::scenario::Scenario>> {
+        debug!(
+            context.logger,
+            "Fetching scenarios from feature id '{}'", id
+        );
+        features::scenario::fetch_scenarios_by_feature_id(&id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
 
     /// Return the steps belonging to the scenario specified by the given id.
-    // Temporarily disabled
-    // async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
-    //     debug!(context.logger, "Fetching steps from feature id '{}'", id);
-    //     features::step::fetch_steps_by_scenario_id(&id, &context)
-    //         .await
-    //         .map_err(IntoFieldError::into_field_error)
-    // }
+    async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
+        debug!(context.logger, "Fetching steps from feature id '{}'", id);
+        features::step::fetch_steps_by_scenario_id(&id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
 
     /// Return a list of all environments
     async fn environments(
