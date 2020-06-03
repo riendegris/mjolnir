@@ -72,7 +72,48 @@ BEGIN
       $1 -- scerario id
     , $2 -- step id
   );
+  -- Now we update the 'updated' timestamp on the scenario
   UPDATE main.scenarios
+  SET updated_at = NOW()
+  WHERE id = $1
+  RETURNING updated_at INTO _updated_at;
+  EXCEPTION WHEN others THEN
+      GET STACKED DIAGNOSTICS
+          v_state   = RETURNED_SQLSTATE,
+          v_msg     = MESSAGE_TEXT,
+          v_detail  = PG_EXCEPTION_DETAIL,
+          v_hint    = PG_EXCEPTION_HINT,
+          v_context = PG_EXCEPTION_CONTEXT;
+      RAISE NOTICE E'Got exception:
+          state  : %
+          message: %
+          detail : %
+          hint   : %
+          context: %', v_state, v_msg, v_detail, v_hint, v_context;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION main.add_step_to_background (
+    INOUT _background_id UUID   -- background id (1)
+  , _step_id UUID               -- step id       (2)
+  , OUT _updated_at TIMESTAMPTZ)
+AS $$
+DECLARE
+    v_state   TEXT;
+    v_msg     TEXT;
+    v_detail  TEXT;
+    v_hint    TEXT;
+    v_context TEXT;
+BEGIN
+  -- Relying on foreign key constraints to ensure scenario id and step id exists
+  INSERT INTO main.background_step_map
+  VALUES (
+      $1 -- background id
+    , $2 -- step id
+  );
+  -- Now we update the 'updated' timestamp on the background
+  UPDATE main.backgrounds
   SET updated_at = NOW()
   WHERE id = $1
   RETURNING updated_at INTO _updated_at;

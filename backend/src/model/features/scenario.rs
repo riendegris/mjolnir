@@ -1,6 +1,6 @@
 use super::{
     step::{self},
-    IdTimestamp,
+    IdTimestamp, SourceType,
 };
 use crate::{error, gql};
 use chrono::prelude::*;
@@ -124,7 +124,9 @@ pub async fn create_or_replace_scenario_from_gherkin(
     // which we can use try_for_each and insert them in the database
     stream::iter(scenario.steps.into_iter().map(|step| Ok(step)))
         .try_for_each(|step| async {
-            let _step = step::create_or_replace_step_from_gherkin(step, &id, context).await?;
+            let _step =
+                step::create_or_replace_step_from_gherkin(step, &id, SourceType::Scenario, context)
+                    .await?;
             Ok(())
         })
         .await?;

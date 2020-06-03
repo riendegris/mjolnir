@@ -1,4 +1,4 @@
-use super::scenario::{self, Scenario};
+use super::{background, scenario};
 use crate::{error, gql};
 use chrono::prelude::*;
 use futures::stream::{self, TryStreamExt};
@@ -93,40 +93,7 @@ pub async fn create_or_replace_feature_from_string(
         details: String::from("Could not parse feature"),
     })?;
 
-    debug!(
-        context.logger,
-        "Inserting Feature '{}' | '{}' | '{}'",
-        feature.name,
-        feature.description.clone().unwrap_or(String::from("")),
-        feature.tags.join(", ")
-    );
-
-    let res: Feature = sqlx::query_as("SELECT * FROM main.create_or_replace_feature($1, $2, $3)")
-        .bind(feature.name)
-        .bind(feature.description.unwrap_or(String::from("")))
-        .bind(feature.tags)
-        .fetch_one(&context.pool)
-        .await
-        .context(error::DBError {
-            details: format!("Could not create or replace feature"),
-        })?;
-
-    let id = res.id;
-
-    debug!(context.logger, "Inserted Feature");
-    // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
-    // which we can use try_for_each and insert them in the database
-    stream::iter(feature.scenarios.into_iter().map(|scenario| Ok(scenario)))
-        .try_for_each(|scenario| async {
-            debug!(context.logger, "Inserting Scenario");
-            // We discard the scenario, but we need to give it a type to help the compiler.
-            let _scenario: Scenario =
-                scenario::create_or_replace_scenario_from_gherkin(scenario, &id, context).await?;
-            Ok(())
-        })
-        .await?;
-
-    Ok(res)
+    create_or_replace_feature_from_gherkin(feature, context).await
 }
 
 pub async fn create_or_replace_feature_from_gherkin(
@@ -147,6 +114,10 @@ pub async fn create_or_replace_feature_from_gherkin(
 
     let id = res.id;
 
+    if let Some(background) = feature.background {
+        let _background =
+            background::create_or_replace_background_from_gherkin(background, &id, context).await?;
+    }
     // Here we're turning the feature's scenarios into a stream of Result<Scenario, _>, on
     // which we can use try_for_each and insert them in the database
     stream::iter(feature.scenarios.into_iter().map(|scenario| Ok(scenario)))

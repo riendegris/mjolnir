@@ -1,9 +1,9 @@
-use super::IdTimestamp;
+use super::{IdTimestamp, SourceType};
 use crate::{error, gql};
 use chrono::prelude::*;
 use juniper::{GraphQLEnum, GraphQLObject};
 use serde::{Deserialize, Serialize};
-use slog::debug;
+use slog::{debug, info};
 use snafu::ResultExt;
 use sqlx::{
     postgres::{PgQueryAs, PgRow},
@@ -107,10 +107,11 @@ pub async fn create_or_replace_step(
 
 pub async fn create_or_replace_step_from_gherkin(
     step: gherkin_rust::Step,
-    scenario: &Uuid,
+    id: &Uuid,          // id of the source
+    source: SourceType, // type of the source
     context: &gql::Context,
 ) -> Result<Step, error::Error> {
-    debug!(
+    info!(
         context.logger,
         "Creating or Updating Step from gherkin: {} / {:?} / {:?}",
         step.value,
@@ -118,10 +119,10 @@ pub async fn create_or_replace_step_from_gherkin(
         step.docstring
     );
 
-    let id = Uuid::new_v4();
+    let step_id = Uuid::new_v4();
 
     let res: Step = sqlx::query_as("SELECT * FROM main.create_or_replace_step($1, $2, $3, $4)")
-        .bind(id)
+        .bind(step_id)
         .bind(StepType::from(step.ty))
         .bind(step.value.clone())
         .bind(step.docstring.unwrap_or(String::from("")))
@@ -131,19 +132,42 @@ pub async fn create_or_replace_step_from_gherkin(
             details: format!("Could not insert or update step '{}'", step.value),
         })?;
 
-    debug!(context.logger, "Inserted step '{}'", step.value);
+    info!(context.logger, "Inserted step '{}'", step.value);
 
-    let _idts: IdTimestamp = sqlx::query_as("SELECT * FROM main.add_step_to_scenario($1, $2)")
-        .bind(scenario)
-        .bind(id)
-        .fetch_one(&context.pool)
-        .await
-        .context(error::DBError {
-            details: format!(
-                "Could not associate step '{}' to scenario '{}'",
-                id, scenario
-            ),
-        })?;
-
+    // TODO There is an opportunity to make the code more generic below...
+    match source {
+        SourceType::Scenario => {
+            let _idts: IdTimestamp =
+                sqlx::query_as("SELECT * FROM main.add_step_to_scenario($1, $2)")
+                    .bind(id)
+                    .bind(step_id)
+                    .fetch_one(&context.pool)
+                    .await
+                    .context(error::DBError {
+                        details: format!(
+                            "Could not associate step '{}' to scenario '{}'",
+                            step_id, id
+                        ),
+                    })?;
+        }
+        SourceType::Background => {
+            info!(
+                context.logger,
+                "adding step '{}' to background '{}'", step_id, id
+            );
+            let _idts: IdTimestamp =
+                sqlx::query_as("SELECT * FROM main.add_step_to_background($1, $2)")
+                    .bind(id)
+                    .bind(step_id)
+                    .fetch_one(&context.pool)
+                    .await
+                    .context(error::DBError {
+                        details: format!(
+                            "Could not associate step '{}' to background '{}'",
+                            step_id, id
+                        ),
+                    })?;
+        }
+    }
     Ok(res)
 }

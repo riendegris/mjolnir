@@ -21,7 +21,7 @@ CREATE TABLE main.features (
 
 ALTER TABLE main.features OWNER TO odin;
 
-CREATE OR REPLACE FUNCTION main.tg_notify_features ()
+CREATE OR REPLACE FUNCTION main.tg_notify ()
   RETURNS TRIGGER
   LANGUAGE plpgsqL
 AS $$
@@ -37,7 +37,7 @@ CREATE TRIGGER notify_features
 AFTER INSERT OR UPDATE
 ON main.features
 FOR EACH ROW
-  EXECUTE PROCEDURE main.tg_notify_features('features');
+  EXECUTE PROCEDURE main.tg_notify('features');
 
 CREATE TABLE main.scenarios (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
@@ -57,6 +57,12 @@ CREATE TABLE main.scenarios (
 
 ALTER TABLE main.scenarios OWNER TO odin;
 
+CREATE TRIGGER notify_scenarios
+AFTER INSERT OR UPDATE
+ON main.scenarios
+FOR EACH ROW
+  EXECUTE PROCEDURE main.tg_notify('scenarios');
+
 CREATE TABLE main.backgrounds (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
   feature UUID REFERENCES main.features(id) ON DELETE CASCADE,
@@ -66,6 +72,12 @@ CREATE TABLE main.backgrounds (
 );
 
 ALTER TABLE main.backgrounds OWNER TO odin;
+
+CREATE TRIGGER notify_backgrounds
+AFTER INSERT OR UPDATE
+ON main.backgrounds
+FOR EACH ROW
+  EXECUTE PROCEDURE main.tg_notify('backgrounds');
 
 CREATE TABLE main.steps (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),

@@ -1,5 +1,5 @@
 use chrono::prelude::*;
-use juniper::GraphQLObject;
+use juniper::{GraphQLEnum, GraphQLObject};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     postgres::PgRow,
@@ -7,6 +7,7 @@ use sqlx::{
 };
 use uuid::Uuid;
 
+pub mod background;
 pub mod feature;
 pub mod scenario;
 pub mod step;
@@ -21,8 +22,21 @@ pub struct IdTimestamp {
 impl<'c> FromRow<'c, PgRow<'c>> for IdTimestamp {
     fn from_row(row: &PgRow<'c>) -> Result<Self, sqlx::Error> {
         Ok(IdTimestamp {
-            id: row.get(0),
-            updated_at: row.get(1),
+            id: row.try_get(0)?,
+            updated_at: row.try_get(1)?,
         })
     }
+}
+
+// A step can be part of a scenario, or a background.
+// This enum helps differentiate between the two cases.
+// FIXME The name, SourceType, is too general
+#[derive(Debug, PartialEq, Serialize, Deserialize, sqlx::Type, GraphQLEnum)]
+#[sqlx(rename = "source_type")]
+#[serde(rename_all = "lowercase")]
+pub enum SourceType {
+    #[sqlx(rename = "background")]
+    Background,
+    #[sqlx(rename = "scenario")]
+    Scenario,
 }
