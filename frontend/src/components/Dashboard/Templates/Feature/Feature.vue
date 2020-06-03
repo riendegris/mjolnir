@@ -1,85 +1,74 @@
 <template>
-  <div class="flex-grow flex main-cards">
+  <div v-if="foo" class="flex-grow flex main-cards">
     <Scenarios class="left" :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
-    <Scenario class="right" :steps='steps' :scenario='scenario' />
+    <!--<Scenario class="right" :steps='steps' :scenario='scenario' />-->
+    <Background class="right" :steps='steps' />
+  </div>
+  <div v-else>
+    <p>Loading</p>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Scenarios from './Scenarios'
-import Scenario from './Scenario'
+import Background from './Background'
 
 export default {
   name: 'Feature',
   components: {
     Scenarios,
-    Scenario
+    Background
   },
-  // For debugging this panel, I hardcode all the details
-  // data () {
-  //   return {
-  //     id: '7789e6c6-4b6e-480f-ae6e-8c561649dcc4',
-  //     scenarios: [
-  //       { id: 'foo', name: 'select right hand side' },
-  //       { id: 'bar', name: 'select left hand side' },
-  //       { id: 'baz', name: 'select right foot side' },
-  //       { id: 'qux', name: 'select barehanded side' }
-  //     ],
-  //     feature: {
-  //       id: 'foo',
-  //       name: 'Baseline Acceptance Test',
-  //       description: 'These are for regression testing',
-  //       tags: ['regression']
-  //     }
-  //   }
-  // }
   data () {
     return {
-      idx: 0 // index of the scenario selected by the user, drives the Scenario component
+      idx: 0, // index of the scenario selected by the user, drives the Scenario component
       // it is initialized to 0 here, but it is driven by the Scenarios component.
+      foo: false
     }
   },
   computed: {
     ...mapGetters({
       id: 'dashboard/value',
-      scenarios: 'scenarios/scenarios',
-      getFeatureById: 'features/feature',
-      steps: 'steps/steps'
+      backgroundLoading: 'features/backgroundLoading',
+      scenariosLoading: 'features/scenariosLoading'
+      // scenarioLoading: 'features/scenarioLoading',
     }),
     feature () {
-      return this.getFeatureById(this.id)
+      return this.$store.getters['features/feature'](this.id)
     },
-    scenario () {
-      return this.scenarios[this.idx]
-    }
-  },
-  watch: {
-    // when scenario becomes available, we load new steps
-    scenario: function (scenario) {
-      if (scenario !== undefined) {
-        const sid = scenario.id
-        console.log('scenario id ' + sid)
-        this.loadSteps({ id: sid })
-      }
+    scenarios () {
+      return this.$store.getters['features/scenarios'](this.id)
+    },
+    background () {
+      return this.$store.getters['features/background'](this.id)
+    },
+    steps () {
+      return this.$store.getters['features/background'](this.id).steps
+    },
+    hasBackground () {
+      // FIXME Are all these tests required
+      // To have a background, we must be done with getting the response from the server,
+      // and that response must not be null (Some features don't have a background)
+      return !this.backgroundLoading && this.background && this.background !== 'null' && this.background !== 'undefined' && this.steps !== 'undefined'
     }
   },
   methods: {
     ...mapActions({
-      loadScenarios: 'scenarios/loadScenarios',
-      loadSteps: 'steps/loadSteps'
+      loadScenarios: 'features/loadScenarios',
+      loadBackground: 'features/loadBackground'
     }),
     selectScenario (idx) {
       this.idx = idx
-      const id = this.scenario.id
-      console.log('reloading steps with id ' + id)
-      this.loadSteps({ id })
+      // const id = this.scenario.id
+      // console.log('reloading steps with id ' + id)
+      // this.loadSteps({ id })
     }
   },
   async created () {
-    const id = this.id
-    console.log('Creating Feature with id: ' + this.id)
+    const { id } = this
     this.loadScenarios({ id })
+    this.loadBackground({ id }).then( () => { this.foo = true })
   }
 }
 </script>

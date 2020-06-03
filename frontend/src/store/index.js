@@ -5,8 +5,6 @@ import Notifications from './modules/notifications'
 import Banos from './modules/banos'
 import Dashboard from './modules/dashboard'
 import Features from './modules/features'
-import Scenarios from './modules/scenarios'
-import Backgrounds from './modules/backgrounds'
 import Steps from './modules/steps'
 import Loader from './modules/loader'
 
@@ -20,8 +18,6 @@ export default new Vuex.Store({
     banos: Banos,
     dashboard: Dashboard,
     features: Features,
-    scenarios: Scenarios,
-    backgrounds: Backgrounds,
     steps: Steps,
     loader: Loader
   },

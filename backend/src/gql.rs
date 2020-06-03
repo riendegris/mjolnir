@@ -55,12 +55,42 @@ impl Query {
             .map_err(IntoFieldError::into_field_error)
     }
 
-    /// Return the steps belonging to the scenario specified by the given id.
-    async fn steps(&self, id: Uuid, context: &Context) -> FieldResult<Vec<features::step::Step>> {
-        debug!(context.logger, "Fetching steps from feature id '{}'", id);
-        features::step::fetch_steps_by_scenario_id(&id, &context)
+    /// Return the background belonging to the feature specified by the given id.
+    async fn background(
+        &self,
+        id: Uuid,
+        context: &Context,
+    ) -> FieldResult<Option<features::background::Background>> {
+        debug!(
+            context.logger,
+            "Fetching background from feature id '{}'", id
+        );
+        features::background::fetch_background_by_feature_id(&id, &context)
             .await
             .map_err(IntoFieldError::into_field_error)
+    }
+
+    /// Return the steps belonging to the scenario or the background specified by the given id.
+    async fn steps(
+        &self,
+        id: Uuid,
+        src: features::SourceType,
+        context: &Context,
+    ) -> FieldResult<Vec<features::step::Step>> {
+        match src {
+            features::SourceType::Scenario => {
+                debug!(context.logger, "Fetching steps from scenario id '{}'", id);
+                features::step::fetch_steps_by_scenario_id(&id, &context)
+                    .await
+                    .map_err(IntoFieldError::into_field_error)
+            }
+            features::SourceType::Background => {
+                debug!(context.logger, "Fetching steps from background id '{}'", id);
+                features::step::fetch_steps_by_background_id(&id, &context)
+                    .await
+                    .map_err(IntoFieldError::into_field_error)
+            }
+        }
     }
 
     /// Return a list of all environments

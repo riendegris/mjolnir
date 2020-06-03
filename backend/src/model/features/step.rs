@@ -74,7 +74,7 @@ pub async fn fetch_steps_by_scenario_id(
     id: &Uuid,
     context: &gql::Context,
 ) -> Result<Vec<Step>, error::Error> {
-    debug!(context.logger, "Fetching steps from feature '{}'", id);
+    debug!(context.logger, "Fetching steps from scenario '{}'", id);
     sqlx::query_as(
         "SELECT st.id, st.step_type, st.value, st.docstring, st.created_at, st.updated_at FROM main.steps AS st
          INNER JOIN main.scenario_step_map AS map ON map.step = st.id
@@ -85,7 +85,26 @@ pub async fn fetch_steps_by_scenario_id(
     .fetch_all(&context.pool)
     .await
     .context(error::DBError {
-        details: "Could not retrieve steps",
+        details: "Could not retrieve steps for scenario",
+    })
+}
+
+pub async fn fetch_steps_by_background_id(
+    id: &Uuid,
+    context: &gql::Context,
+) -> Result<Vec<Step>, error::Error> {
+    debug!(context.logger, "Fetching steps from background '{}'", id);
+    sqlx::query_as(
+        "SELECT st.id, st.step_type, st.value, st.docstring, st.created_at, st.updated_at FROM main.steps AS st
+         INNER JOIN main.background_step_map AS map ON map.step = st.id
+         INNER JOIN main.backgrounds as bk ON map.background = bk.id
+         WHERE bk.id = $1"
+    )
+    .bind(id)
+    .fetch_all(&context.pool)
+    .await
+    .context(error::DBError {
+        details: "Could not retrieve steps for background",
     })
 }
 
