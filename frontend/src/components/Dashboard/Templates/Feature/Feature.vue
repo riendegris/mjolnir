@@ -1,8 +1,8 @@
 <template>
-  <div v-if="foo" class="flex-grow flex main-cards">
+  <div v-if="bar" class="flex-grow flex main-cards">
     <Scenarios class="left" :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
     <!--<Scenario class="right" :steps='steps' :scenario='scenario' />-->
-    <Background class="right" :steps='steps' />
+    <Background class="right" :background='background' />
   </div>
   <div v-else>
     <p>Loading</p>
@@ -24,15 +24,13 @@ export default {
     return {
       idx: 0, // index of the scenario selected by the user, drives the Scenario component
       // it is initialized to 0 here, but it is driven by the Scenarios component.
-      foo: false
+      foo: false,
+      bar: false
     }
   },
   computed: {
     ...mapGetters({
       id: 'dashboard/value',
-      backgroundLoading: 'features/backgroundLoading',
-      scenariosLoading: 'features/scenariosLoading'
-      // scenarioLoading: 'features/scenarioLoading',
     }),
     feature () {
       return this.$store.getters['features/feature'](this.id)
@@ -42,15 +40,6 @@ export default {
     },
     background () {
       return this.$store.getters['features/background'](this.id)
-    },
-    steps () {
-      return this.$store.getters['features/background'](this.id).steps
-    },
-    hasBackground () {
-      // FIXME Are all these tests required
-      // To have a background, we must be done with getting the response from the server,
-      // and that response must not be null (Some features don't have a background)
-      return !this.backgroundLoading && this.background && this.background !== 'null' && this.background !== 'undefined' && this.steps !== 'undefined'
     }
   },
   methods: {
@@ -60,15 +49,17 @@ export default {
     }),
     selectScenario (idx) {
       this.idx = idx
-      // const id = this.scenario.id
-      // console.log('reloading steps with id ' + id)
-      // this.loadSteps({ id })
     }
   },
   async created () {
     const { id } = this
     this.loadScenarios({ id })
-    this.loadBackground({ id }).then( () => { this.foo = true })
+    this.loadBackground({ id }).then( resp => {
+      console.log('load background: ' + resp)
+      this.foo = true
+      }, error => {
+        console.log(error)
+      })
   }
 }
 </script>

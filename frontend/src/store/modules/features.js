@@ -2,11 +2,7 @@ import axios from 'axios'
 import ApiRoutes from '@/api/apiRoutes'
 
 const state = {
-  features: [],
-  featuresLoading: false,
-  scenariosLoading: false,
-  backgroundLoading: false,
-  scenarioLoading: false
+  features: []
 }
 
 const getters = {
@@ -25,11 +21,7 @@ const getters = {
   background: state => (id) => {
     const i = state.features.findIndex(obj => obj.id === id)
     return state.features[i].background
-  },
-  featuresLoading: state => state.featuresLoading,
-  scenariosLoading: state => state.scenariosLoading,
-  backgroundLoading: state => state.backgroundLoading,
-  scenarioLoading: state => state.scenarioLoading
+  }
 }
 
 const mutations = {
@@ -49,20 +41,11 @@ const mutations = {
   updateBackgroundSteps: (state, { id, steps }) => {
     const i = state.features.findIndex(obj => obj.id === id)
     state.features[i].background.steps = steps
-  },
-  featuresLoading: (state) => { state.featuresLoading = true },
-  scenariosLoading: (state) => { state.scenariosLoading = true },
-  scenarioLoading: (state) => { state.scenarioLoading = true },
-  backgroundLoading: (state) => { state.backgroundLoading = true },
-  featuresReady: (state) => { state.featuresLoading = false },
-  scenariosReady: (state) => { state.scenariosLoading = false },
-  scenarioReady: (state) => { state.scenarioLoading = false },
-  backgroundReady: (state) => { state.backgroundLoading = false }
+  }
 }
 
 const actions = {
   loadFeatures: async ({ dispatch, commit }) => {
-    commit('featuresLoading')
     const query = `{
       features {
         id,
@@ -98,10 +81,8 @@ const actions = {
             },
             { root: true }
           )
-          commit('featuresReady')
         }
         commit('updateFeatures', features)
-        commit('featuresReady')
       })
     } catch (err) {
       console.log('retrieving Features error: ' + err)
@@ -114,7 +95,6 @@ const actions = {
         },
         { root: true }
       )
-      commit('featuresReady')
     }
   },
   uploadFeature: async ({ dispatch, commit }, { text }) => {
@@ -176,7 +156,6 @@ const actions = {
     }
   },
   loadScenarios: async ({ dispatch, commit }, { id }) => {
-    commit('scenariosLoading')
     const variables = {
       id: id
     }
@@ -214,10 +193,8 @@ const actions = {
             },
             { root: true }
           )
-          commit('scenariosReady')
         }
         commit('updateFeatureScenarios', { id, scenarios })
-        commit('scenariosReady')
       })
     } catch (err) {
       console.log('Retrieving Scenarios error: ' + err)
@@ -230,12 +207,22 @@ const actions = {
         },
         { root: true }
       )
-      commit('scenariosReady')
     }
   },
+  loadBackground: async ({ state, dispatch }, { id }) => {
+    console.log('async id: ' + id)
+    dispatch('loadBackgroundCore', { id }).then(resp => {
+      const i = state.features.findIndex(obj => obj.id === id)
+      console.log('async load: ' + state.features[i].background.id)
+      dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id }).then(resp => {
+        return Promise.resolve(true)
+      })
+    })
+    // TODO Understand why I can't go through the getters
+  },
+
   // Load the background of feature 'id'
-  loadBackground: async ({ dispatch, commit }, { id }) => {
-    commit('backgroundLoading')
+  loadBackgroundCore: async ({ dispatch, commit }, { id }) => {
     const variables = {
       id: id
     }
@@ -270,11 +257,10 @@ const actions = {
             },
             { root: true }
           )
-          commit('backgroundReady')
+          return Promise.reject(new Error(background.error))
         }
         commit('updateBackground', { id, background })
-        dispatch('loadBackgroundSteps', { feature: id, id: background.id })
-        commit('backgroundReady')
+        return Promise.resolve(true)
       })
     } catch (err) {
       console.log('Retrieving Background error: ' + err)
@@ -287,12 +273,11 @@ const actions = {
         },
         { root: true }
       )
-      commit('backgroundReady')
+      return Promise.reject(new Error(err))
     }
   },
   // Load the steps of background 'id'
   loadBackgroundSteps: async ({ dispatch, commit }, { feature, id }) => {
-    commit('backgroundLoading')
     const variables = {
       id: id
     }
@@ -331,10 +316,10 @@ const actions = {
             },
             { root: true }
           )
-          commit('backgroundReady')
+          return Promise.reject(new Error(steps.error))
         }
         commit('updateBackgroundSteps', { id: feature, steps })
-        commit('backgroundReady')
+        return Promise.resolve(true)
       })
     } catch (err) {
       console.log('Retrieving Steps error: ' + err)
@@ -347,7 +332,7 @@ const actions = {
         },
         { root: true }
       )
-      commit('backgroundReady')
+      return Promise.reject(new Error(err))
     }
   }
 }

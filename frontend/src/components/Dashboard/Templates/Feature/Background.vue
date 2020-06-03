@@ -5,7 +5,7 @@
     </div>
     <div class="flex-grow flex flex-col items-center justify-start bg-blue-100">
       <ul class="my-6">
-        <li v-for="step in steps" :key="step.id">
+        <li v-for="step in background.steps" :key="step.id">
           <span class="font-semibold">{{ step.stepType }} </span><span>{{ step.value }}</span>
         </li>
       </ul>
@@ -16,6 +16,6 @@
 <script>
 export default {
   name: 'Background',
-  props: ['steps']
+  props: ['background']
 }
 </script>
