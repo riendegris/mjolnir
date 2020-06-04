@@ -211,14 +211,10 @@ const actions = {
   },
   loadBackground: async ({ state, dispatch }, { id }) => {
     console.log('async id: ' + id)
-    dispatch('loadBackgroundCore', { id }).then(resp => {
-      const i = state.features.findIndex(obj => obj.id === id)
-      console.log('async load: ' + state.features[i].background.id)
-      dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id }).then(resp => {
-        return Promise.resolve(true)
-      })
-    })
-    // TODO Understand why I can't go through the getters
+    await dispatch('loadBackgroundCore', { id })
+    const i = state.features.findIndex(obj => obj.id === id)
+    console.log('async load: ' + state.features[i].background.id)
+    await dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id })
   },
 
   // Load the background of feature 'id'
@@ -234,7 +230,7 @@ const actions = {
       }
     }`
     try {
-      axios({
+      await axios({
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -257,10 +253,8 @@ const actions = {
             },
             { root: true }
           )
-          return Promise.reject(new Error(background.error))
         }
         commit('updateBackground', { id, background })
-        return Promise.resolve(true)
       })
     } catch (err) {
       console.log('Retrieving Background error: ' + err)
@@ -273,7 +267,6 @@ const actions = {
         },
         { root: true }
       )
-      return Promise.reject(new Error(err))
     }
   },
   // Load the steps of background 'id'
@@ -292,7 +285,7 @@ const actions = {
     }`
 
     try {
-      axios({
+      await axios({
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -316,10 +309,8 @@ const actions = {
             },
             { root: true }
           )
-          return Promise.reject(new Error(steps.error))
         }
         commit('updateBackgroundSteps', { id: feature, steps })
-        return Promise.resolve(true)
       })
     } catch (err) {
       console.log('Retrieving Steps error: ' + err)
@@ -332,7 +323,6 @@ const actions = {
         },
         { root: true }
       )
-      return Promise.reject(new Error(err))
     }
   }
 }

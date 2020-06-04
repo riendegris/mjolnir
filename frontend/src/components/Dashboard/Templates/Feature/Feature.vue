@@ -1,5 +1,5 @@
 <template>
-  <div v-if="bar" class="flex-grow flex main-cards">
+  <div v-if="foo" class="flex-grow flex main-cards">
     <Scenarios class="left" :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
     <!--<Scenario class="right" :steps='steps' :scenario='scenario' />-->
     <Background class="right" :background='background' />
