@@ -1,8 +1,8 @@
 <template>
   <div v-if="foo" class="flex-grow flex main-cards">
-    <Scenarios class="left" :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
-    <!--<Scenario class="right" :steps='steps' :scenario='scenario' />-->
-    <Background class="right" :background='background' />
+    <Scenarios :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
+    <Scenario :scenario='scenario' />
+    <Background :background='background' />
   </div>
   <div v-else>
     <p>Loading</p>
@@ -12,25 +12,28 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Scenarios from './Scenarios'
+import Scenario from './Scenario'
 import Background from './Background'
 
 export default {
   name: 'Feature',
   components: {
     Scenarios,
+    Scenario,
     Background
   },
   data () {
     return {
       idx: 0, // index of the scenario selected by the user, drives the Scenario component
       // it is initialized to 0 here, but it is driven by the Scenarios component.
+      // FIXME Get a more descriptive variable name
       foo: false,
-      bar: false
+      scenario: {}
     }
   },
   computed: {
     ...mapGetters({
-      id: 'dashboard/value',
+      id: 'dashboard/value'
     }),
     feature () {
       return this.$store.getters['features/feature'](this.id)
@@ -45,32 +48,35 @@ export default {
   methods: {
     ...mapActions({
       loadScenarios: 'features/loadScenarios',
-      loadBackground: 'features/loadBackground'
+      loadBackground: 'features/loadBackground',
+      loadScenarioSteps: 'features/loadScenarioSteps'
     }),
-    selectScenario (idx) {
+    async selectScenario (idx) {
       this.idx = idx
+      this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
+      await this.loadScenarioSteps({feature: this.id, scenario: this.scenario.id})
+      this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
     }
   },
   async created () {
-    const { id } = this
-    this.loadScenarios({ id })
-    this.loadBackground({ id }).then( resp => {
-      console.log('load background: ' + resp)
-      this.foo = true
-      }, error => {
-        console.log(error)
-      })
+    await this.loadScenarios({ id: this.id })
+    this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
+    await this.loadBackground({ id: this.id })
+    console.log('scenario id: ' + this.scenario.id)
+    await this.loadScenarioSteps({feature: this.id, scenario: this.scenario.id})
+    this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
+    this.foo = true
   }
 }
 </script>
 
 <style>
-.left {
-  flex: 50%;
-  margin-right: 0.75rem;
-}
-.right {
-  flex: 50%;
-  margin-left: 0.75rem;
+.main-cards {
+  display: grid;
+  grid-template-columns: 0.5fr 0.5fr;
+  grid-template-rows: 0.5fr 0.5fr;
+  grid-template-areas:
+    "scenarios background"
+    "scenarios scenario";
 }
 </style>

@@ -24,6 +24,8 @@ const getters = {
   }
 }
 
+// FIXME: I switched notation halfway through, going from 'id' to 'feature', or 'scenario'.
+// Go back and change notation so that its the same everywhere.
 const mutations = {
   updateFeatures: (state, features) => { state.features = features },
   // Update the scenarios of the feature identified by 'id'
@@ -41,6 +43,12 @@ const mutations = {
   updateBackgroundSteps: (state, { id, steps }) => {
     const i = state.features.findIndex(obj => obj.id === id)
     state.features[i].background.steps = steps
+  },
+  // FIXME Need protection against undefined
+  updateScenarioSteps: (state, { feature, scenario, steps }) => {
+    const i = state.features.findIndex(obj => obj.id === feature)
+    const j = state.features[i].scenarios.findIndex(obj => obj.id === scenario)
+    state.features[i].scenarios[j].steps = steps
   }
 }
 
@@ -170,7 +178,7 @@ const actions = {
     }`
 
     try {
-      axios({
+      await axios({
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -210,10 +218,8 @@ const actions = {
     }
   },
   loadBackground: async ({ state, dispatch }, { id }) => {
-    console.log('async id: ' + id)
     await dispatch('loadBackgroundCore', { id })
     const i = state.features.findIndex(obj => obj.id === id)
-    console.log('async load: ' + state.features[i].background.id)
     await dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id })
   },
 
@@ -311,6 +317,63 @@ const actions = {
           )
         }
         commit('updateBackgroundSteps', { id: feature, steps })
+      })
+    } catch (err) {
+      console.log('Retrieving Steps error: ' + err)
+      dispatch('notifications/addNotification',
+        {
+          title: 'Error retrieving steps',
+          message: err,
+          theme: 'error',
+          timeout: 5000
+        },
+        { root: true }
+      )
+    }
+  },
+  // Load the steps of scenario 'id'
+  loadScenarioSteps: async ({ dispatch, commit }, { feature, scenario }) => {
+    console.log('loading steps for scenario ' + scenario)
+    const variables = {
+      id: scenario
+    }
+    const query = `query steps($id: Uuid!) {
+      steps(id: $id, src: SCENARIO) {
+        id,
+        stepType,
+        value,
+        createdAt,
+        updatedAt
+      }
+    }`
+
+    try {
+      await axios({
+        method: 'post',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        url: ApiRoutes.GraphQL,
+        data: JSON.stringify({
+          query: query,
+          variables: variables
+        })
+      }).then(response => {
+        console.log(response)
+        const steps = response.data.data.steps
+        if (steps.error) {
+          dispatch('notifications/addNotification',
+            {
+              title: 'Server Error retrieving steps',
+              message: steps.error,
+              theme: 'error',
+              timeout: 5000
+            },
+            { root: true }
+          )
+        }
+        commit('updateScenarioSteps', { feature, scenario, steps })
       })
     } catch (err) {
       console.log('Retrieving Steps error: ' + err)

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-grow flex flex-col">
+  <div class="background flex flex-col ml-3 mb-3">
     <div class="w-full flex justify-between bg-blue-800 p-6 text-gray-300">
       <span class="uppercase">Background</span>
     </div>
@@ -19,3 +19,9 @@ export default {
   props: ['background']
 }
 </script>
+
+<style>
+.background {
+  grid-area: background;
+}
+</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-grow flex flex-col">
+  <div class="scenarios flex flex-col mr-3">
     <div class="w-full flex justify-between bg-blue-800 p-6 text-gray-300">
       <span class="uppercase">Feature</span>
       <span class="ml-6">{{ truncate(feature.name, 50, true) }}</span>
@@ -45,5 +45,8 @@ export default {
 <style>
 .selected {
   @apply bg-red-800;
+}
+.scenarios {
+  grid-area: scenarios;
 }
 </style>
