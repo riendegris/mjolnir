@@ -121,7 +121,7 @@ const actions = {
     }`
 
     try {
-      axios({
+      await axios({
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -133,12 +133,12 @@ const actions = {
           variables: variables
         })
       }).then(response => {
-        const feature = response.data.data.loadFeature
-        if (feature.error) {
+        if (response.data.errors) {
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
           dispatch('notifications/addNotification',
             {
               title: 'Server Error uploading feature',
-              message: feature.error,
+              message: errmsg,
               theme: 'error',
               timeout: 5000
             },
@@ -148,6 +148,7 @@ const actions = {
         // We're not commiting this feature, because we are
         // also subscribed to feature notifications, and so
         // we should also get the information from there.
+        // const feature = response.data.data.loadFeature
         // commit('updateFeature', feature)
       })
     } catch (err) {
@@ -190,18 +191,19 @@ const actions = {
           variables: variables
         })
       }).then(response => {
-        const scenarios = response.data.data.scenarios
-        if (scenarios.error) {
+        if (response.data.errors) {
+          const errmsg = response.data.errors.message
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving scenarios',
-              message: scenarios.error,
+              message: errmsg,
               theme: 'error',
               timeout: 5000
             },
             { root: true }
           )
         }
+        const scenarios = response.data.data.scenarios
         commit('updateFeatureScenarios', { id, scenarios })
       })
     } catch (err) {
@@ -220,7 +222,10 @@ const actions = {
   loadBackground: async ({ state, dispatch }, { id }) => {
     await dispatch('loadBackgroundCore', { id })
     const i = state.features.findIndex(obj => obj.id === id)
-    await dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id })
+    const background = state.features[i].background
+    if (background !== undefined) {
+      await dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id })
+    }
   },
 
   // Load the background of feature 'id'
@@ -248,19 +253,25 @@ const actions = {
           variables: variables
         })
       }).then(response => {
-        const background = response.data.data.background
-        if (background.error) {
+        if (response.data.errors) {
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving background',
-              message: background.error,
+              message: errmsg,
               theme: 'error',
               timeout: 5000
             },
             { root: true }
           )
         }
-        commit('updateBackground', { id, background })
+        const background = response.data.data.background
+        if (background !== null && background !== undefined) {
+          console.log('there is a background')
+          commit('updateBackground', { id, background })
+        } else {
+          console.log('there is no background')
+        }
       })
     } catch (err) {
       console.log('Retrieving Background error: ' + err)
@@ -303,7 +314,7 @@ const actions = {
           variables: variables
         })
       }).then(response => {
-        console.log(response)
+        // console.log(response)
         const steps = response.data.data.steps
         if (steps.error) {
           dispatch('notifications/addNotification',

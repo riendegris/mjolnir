@@ -1,8 +1,8 @@
 <template>
-  <div v-if="foo" class="flex-grow flex main-cards">
+  <div v-if="foo" class="feature-panel flex-grow">
     <Scenarios :scenarios='scenarios' :feature='feature' @selectIndex='selectScenario'/>
     <Scenario :scenario='scenario' />
-    <Background :background='background' />
+    <Background v-if="hasBackground" :background='background' />
   </div>
   <div v-else>
     <p>Loading</p>
@@ -43,6 +43,9 @@ export default {
     },
     background () {
       return this.$store.getters['features/background'](this.id)
+    },
+    hasBackground () {
+      return this.background !== null || this.background !== undefined
     }
   },
   methods: {
@@ -53,17 +56,17 @@ export default {
     }),
     async selectScenario (idx) {
       this.idx = idx
-      this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
-      await this.loadScenarioSteps({feature: this.id, scenario: this.scenario.id})
+      const scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
+      await this.loadScenarioSteps({feature: this.id, scenario: scenario.id})
       this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
     }
   },
   async created () {
     await this.loadScenarios({ id: this.id })
-    this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
+    const scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
     await this.loadBackground({ id: this.id })
-    console.log('scenario id: ' + this.scenario.id)
-    await this.loadScenarioSteps({feature: this.id, scenario: this.scenario.id})
+    console.log('scenario id: ' + scenario.id)
+    await this.loadScenarioSteps({feature: this.id, scenario: scenario.id})
     this.scenario = this.$store.getters['features/scenarios'](this.id)[this.idx]
     this.foo = true
   }
@@ -71,12 +74,16 @@ export default {
 </script>
 
 <style>
-.main-cards {
+.feature-panel {
   display: grid;
   grid-template-columns: 0.5fr 0.5fr;
   grid-template-rows: 0.5fr 0.5fr;
   grid-template-areas:
     "scenarios background"
     "scenarios scenario";
+  justify-items: stretch;
+  align-items: stretch;
+  justify-content: stretch;
+  align-content: stretch;
 }
 </style>

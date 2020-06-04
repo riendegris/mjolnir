@@ -1,5 +1,5 @@
 <template>
-  <div class="main-panel flex-grow m-6 flex flex-col">
+  <div class="main-panel flex-grow flex flex-col m-6">
     <component :is="componentLoader"/>
   </div>
 </template>

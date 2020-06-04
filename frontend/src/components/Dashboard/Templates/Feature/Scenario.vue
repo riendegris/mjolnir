@@ -8,7 +8,7 @@
       <div class="m-6">
         <p class="italic font-header text-gray-800">{{ scenario.tags }}</p>
       </div>
-      <ul class="my-6">
+      <ul class="my-6 overflow-y-scroll overflow-x-hidden">
         <li v-for="step in scenario.steps" :key="step.id">
           <span class="font-semibold">{{ step.stepType }} </span><span>{{ step.value }}</span>
         </li>

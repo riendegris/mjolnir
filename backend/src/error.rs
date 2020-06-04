@@ -70,6 +70,24 @@ impl IntoFieldError for Error {
                 let errmsg = format!("{}", err);
                 FieldError::new("User Error", graphql_value!({ "internal_error": errmsg }))
             }
+            err @ Error::EnvError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new(
+                    "Environment Error",
+                    graphql_value!({ "internal_error": errmsg }),
+                )
+            }
+            err @ Error::IOError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new("IO Error", graphql_value!({ "internal_error": errmsg }))
+            }
+            err @ Error::TokioIOError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new(
+                    "Tokio IO Error",
+                    graphql_value!({ "internal_error": errmsg }),
+                )
+            }
             err @ Error::DBError { .. } => {
                 let errmsg = format!("{}", err);
                 FieldError::new(
@@ -77,7 +95,24 @@ impl IntoFieldError for Error {
                     graphql_value!({ "internal_error": errmsg }),
                 )
             }
-            _ => FieldError::new("Go Figure!", graphql_value!({ "internal_error": "sol" })),
+            err @ Error::SerdeJsonError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new("Serde Error", graphql_value!({ "internal_error": errmsg }))
+            }
+            err @ Error::ReqwestError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new(
+                    "Reqwest Error",
+                    graphql_value!({ "internal_error": errmsg }),
+                )
+            }
+            err @ Error::GherkinError { .. } => {
+                let errmsg = format!("{}", err);
+                FieldError::new(
+                    "Gherkin Error",
+                    graphql_value!({ "internal_error": errmsg }),
+                )
+            }
         }
     }
 }
