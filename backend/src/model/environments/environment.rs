@@ -53,7 +53,7 @@ pub async fn fetch_environment_by_id(
 ) -> Result<Environment, error::Error> {
     debug!(context.logger, "Fetching environment with id '{}'", id);
     sqlx::query_as(
-        "SELECT id, signature, status, created_at, updated_at FROM main.features WHERE id=$1",
+        "SELECT id, signature, status, created_at, updated_at FROM main.environments WHERE id=$1",
     )
     .bind(id)
     .fetch_one(&context.pool)

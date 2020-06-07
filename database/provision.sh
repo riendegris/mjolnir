@@ -21,5 +21,5 @@ echo "initializing"
 PGPASSWORD=${pgpass} psql -h postgres -U postgres < init.sql
 echo "building"
 PGPASSWORD=${pgpass} psql -h postgres -U postgres mjolnir < build.sql
-# echo "provisioning"
-# PGPASSWORD=${pgpass} psql -h postgres -U postgres mjolnir < test.sql
+echo "provisioning"
+PGPASSWORD=${pgpass} psql -h postgres -U postgres mjolnir < provision.sql

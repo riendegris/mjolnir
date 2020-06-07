@@ -47,6 +47,14 @@ CREATE TABLE main.scenario_environment_map (
 
 ALTER TABLE main.scenario_environment_map OWNER TO odin;
 
+CREATE TABLE main.background_environment_map (
+  background UUID REFERENCES main.backgrounds(id) ON DELETE CASCADE,
+  environment UUID REFERENCES main.environments(id) ON DELETE CASCADE,
+  PRIMARY KEY (background, environment)
+);
+
+ALTER TABLE main.background_environment_map OWNER TO odin;
+
 CREATE TABLE main.indexes (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
   index_type VARCHAR(32) REFERENCES main.index_types(id) ON DELETE CASCADE,

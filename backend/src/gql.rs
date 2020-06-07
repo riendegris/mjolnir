@@ -1,8 +1,11 @@
 use super::model::{environments, features};
+use crate::error;
 use crate::get_connstr;
 use futures::Stream;
 use juniper::{FieldError, FieldResult, IntoFieldError, RootNode};
 use slog::{debug, info, Logger};
+// use snafu::futures::try_future::TryFutureExt;
+use snafu::ResultExt;
 use sqlx::postgres::{PgListener, PgPool};
 use std::pin::Pin;
 use uuid::Uuid;
@@ -140,6 +143,18 @@ impl Mutation {
         debug!(context.logger, "Dropping Feature '{}'", id);
 
         features::feature::delete_feature_by_id(id, &context)
+            .await
+            .map_err(IntoFieldError::into_field_error)
+    }
+
+    // This function returns the environment that correspond to the background specified by 'id'
+    // If the environment doesn't exist, it is created, along with all the indexes that compose it.
+    async fn background_environment(
+        id: Uuid, // background id
+        context: &Context,
+    ) -> FieldResult<environments::environment::Environment> {
+        debug!(context.logger, "Retrieving Background Environment '{}'", id);
+        features::background::fetch_background_environment(&id, &context)
             .await
             .map_err(IntoFieldError::into_field_error)
     }

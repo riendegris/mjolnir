@@ -2,6 +2,8 @@ use super::{IdTimestamp, SourceType};
 use crate::{error, gql};
 use chrono::prelude::*;
 use juniper::{GraphQLEnum, GraphQLObject};
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use slog::{debug, info};
 use snafu::ResultExt;
@@ -189,4 +191,24 @@ pub async fn create_or_replace_step_from_gherkin(
         }
     }
     Ok(res)
+}
+
+pub fn extract_index_from_step(step: String) -> Option<(String, String, Vec<String>)> {
+    lazy_static! {
+        static ref RE: Regex =
+            Regex::new("I am indexing ([A-Za-z_]+) with ([A-Za-z]+) from ([0-9A-Za-z-, ]+)")
+                .unwrap();
+    }
+    RE.captures(&step).and_then(|caps| {
+        let index_type = String::from(caps.get(1).unwrap().as_str());
+        let data_source = String::from(caps.get(2).unwrap().as_str());
+        let regions = caps
+            .get(3)
+            .unwrap()
+            .as_str()
+            .split(", ")
+            .map(|r| r.to_string())
+            .collect();
+        Some((index_type, data_source, regions))
+    })
 }
