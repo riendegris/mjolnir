@@ -44,7 +44,7 @@ export default {
 
 <style>
 .selected {
-  @apply bg-red-800;
+  @apply bg-gray-300 border border-gray-800
 }
 .scenarios {
   grid-area: scenarios;

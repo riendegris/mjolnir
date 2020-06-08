@@ -10,16 +10,16 @@ const eventSource = {
     this.connection.onmessage = this.onMessage
   },
   onError: function (event) {
-    console.log('Error w/ Websocket')
+    console.log('Error w/ Websocket' + event)
   },
   onConnectionOpen: function (event) {
     console.log(event)
-    console.log('Successfully connected to features notifications')
+    console.log('Successfully connected to server notifications')
     const message = `{
       "id": "1",
       "type":"start",
       "payload": {
-          "query": "subscription features { features { id, name, description, tags } }"
+          "query": "subscription notifications { notifications }"
         }
     }`
     this.send(message)

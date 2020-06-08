@@ -6,6 +6,7 @@ import Banos from './modules/banos'
 import Dashboard from './modules/dashboard'
 import Features from './modules/features'
 import Steps from './modules/steps'
+import Environments from './modules/environments'
 import Loader from './modules/loader'
 
 Vue.use(Vuex)
@@ -19,6 +20,7 @@ export default new Vuex.Store({
     dashboard: Dashboard,
     features: Features,
     steps: Steps,
+    environments: Environments,
     loader: Loader
   },
   strict: debug,

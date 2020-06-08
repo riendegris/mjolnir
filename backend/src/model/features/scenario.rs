@@ -1,7 +1,4 @@
-use super::{
-    step::{self},
-    IdTimestamp, SourceType,
-};
+use super::{step, SourceType};
 use crate::{error, gql};
 use chrono::prelude::*;
 use futures::stream::{self, TryStreamExt};

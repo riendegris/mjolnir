@@ -67,44 +67,25 @@ impl<'c> FromRow<'c, PgRow<'c>> for Index {
     }
 }
 
-// pub async fn step_analysis(
-//     index_type: &str,
-//     data_source: &str,
-//     regions: &[&str],
-//     scenario: &Uuid,
-//     context: &gql::Context,
-// ) -> Result<(), error::Error> {
-//     validate_index_type(index_type, context).await?;
-//     validate_data_source(data_source, context).await?;
-//     validate_data_source_with_index_type(data_source, index_type, context).await?;
-//
-//     let index: Index = sqlx::query_as("SELECT * FROM main.create_or_replace_index($1, $2, $3)")
-//         .bind(index_type)
-//         .bind(data_source)
-//         .bind(regions)
-//         .fetch_one(&context.pool)
-//         .await
-//         .context(error::DBError {
-//             details: format!("Could not retrieve index type '{}'", index_type),
-//         })?;
-//
-//     // Now we need to attach this Index to an environment, and the environment to a scenario.
-//     let environment =
-//         sqlx::query("SELECT environment FROM main.scenario_environment_map WHERE scenario = $1")
-//             .bind(scenario)
-//             .try_map(|row: PgRow| row.try_get::<Uuid, _>(0))
-//             .fetch_one(&context.pool)
-//             .await
-//             .context(error::DBError {
-//                 details: format!(
-//                     "Could not retrieve environment id from scenario'{}'",
-//                     scenario
-//                 ),
-//             })?;
-//
-//     // How do we attach the index to the environment? Should it replace it?
-//     Ok(())
-// }
+pub async fn fetch_indexes_by_environment_id(
+    id: &Uuid,
+    context: &gql::Context,
+) -> Result<Vec<Index>, error::Error> {
+    debug!(context.logger, "Fetching indexes from environment '{}'", id);
+    // We select everything except search which is a created field.
+    sqlx::query_as(
+        "SELECT i.id, i.signature, i.index_type, i.data_source, i.regions, i.filepath, i.status, i.created_at, i.updated_at FROM main.indexes AS i
+        INNER JOIN main.environment_index_map AS m ON m.index_id = i.id
+        WHERE m.environment = $1",
+    )
+    .bind(id)
+    .fetch_all(&context.pool)
+    .await
+    .map(Into::<Vec<Index>>::into)
+    .context(error::DBError {
+        details: "Could not retrieve indexes",
+    })
+}
 
 pub async fn validate_index_type(
     index_type: &str,
@@ -153,7 +134,7 @@ pub async fn validate_data_source_with_index_type(
         .await
         //.map(Into::<Vec<Environment>>::into)
         .context(error::DBError {
-            details: "Could not retrieve environments",
+            details: "Could not validate",
         })?;
     Ok(())
 }

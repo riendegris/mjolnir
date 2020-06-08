@@ -21,6 +21,14 @@
         </ul>
       </li>
       <li class="p-8 text-gray-500">
+        <span class="uppercase text-gray-500">Environments</span>
+        <ul class="pl-4 pt-2">
+          <li v-for="environment in environments" :key="environment.id">
+            <button class="text-gray-400 text-sm font-header" @click='switchPanel({"panel": "Environment", "key": "id", "value": environment.id })'>{{ truncate(environment.signature, 22, true) }}</button>
+          </li>
+        </ul>
+      </li>
+      <li class="p-8 text-gray-500">
         <span class="uppercase text-gray-500">Runs</span>
         <ul class="pl-4 pt-2">
           <li>
@@ -28,20 +36,6 @@
           </li>
           <li>
             <button class="text-gray-400 text-red-500" @click='switchPanel("Runs")'>May 24th, 10:51</button>
-          </li>
-        </ul>
-      </li>
-      <li class="p-8 text-gray-500">
-        <span class="uppercase text-gray-500">Environments</span>
-        <ul class="pl-4 pt-2">
-          <li>
-            <button class="text-gray-400 text-green-500" @click='switchPanel("Environment")'>France</button>
-          </li>
-          <li>
-            <button class="text-gray-400 text-red-500" @click='switchPanel("Runs")'>Ile-de-France</button>
-          </li>
-          <li>
-            <button class="text-gray-400 text-red-500" @click='switchPanel("Runs")'>Netherlands</button>
           </li>
         </ul>
       </li>
@@ -56,17 +50,20 @@ export default {
   name: 'SideNav',
   computed: {
     ...mapGetters({
-      features: 'features/features'
+      features: 'features/features',
+      environments: 'environments/environments'
     })
   },
   methods: {
     ...mapActions({
       switchPanel: 'dashboard/switchPanel',
-      loadFeatures: 'features/loadFeatures'
+      loadFeatures: 'features/loadFeatures',
+      loadEnvironments: 'environments/loadEnvironments'
     })
   },
   async created () {
-    this.loadFeatures()
+    await this.loadFeatures()
+    await this.loadEnvironments()
   }
 }
 </script>
@@ -74,15 +71,5 @@ export default {
 <style>
 .sidenav {
   grid-area: sidenav;
-}
-
-.sidenav__list-item {
-  padding: 20px 20px 20px 40px;
-  color: #ddd;
-}
-
-.sidenav__list-item:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  cursor: pointer;
 }
 </style>

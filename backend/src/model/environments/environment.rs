@@ -38,7 +38,7 @@ pub async fn fetch_all_environments(
     context: &gql::Context,
 ) -> Result<Vec<Environment>, error::Error> {
     debug!(context.logger, "Retrieving all environments");
-    sqlx::query_as("SELECT id, signature, status, created_at, updated_at FROM main.features")
+    sqlx::query_as("SELECT id, signature, status, created_at, updated_at FROM main.environments")
         .fetch_all(&context.pool)
         .await
         .map(Into::<Vec<Environment>>::into)

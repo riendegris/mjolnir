@@ -44,6 +44,12 @@ const mutations = {
     const i = state.features.findIndex(obj => obj.id === id)
     state.features[i].background.steps = steps
   },
+  // Update the environment of the background of the feature identified by 'id'
+  // FIXME Need protection against undefined background
+  updateBackgroundEnvironment: (state, { id, environment }) => {
+    const i = state.features.findIndex(obj => obj.id === id)
+    state.features[i].background.environment = environment
+  },
   // FIXME Need protection against undefined
   updateScenarioSteps: (state, { feature, scenario, steps }) => {
     const i = state.features.findIndex(obj => obj.id === feature)
@@ -66,7 +72,7 @@ const actions = {
     }`
 
     try {
-      axios({
+      await axios({
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -77,19 +83,20 @@ const actions = {
           query: query
         })
       }).then(response => {
-        console.log(response)
-        const features = response.data.data.features
-        if (features.error) {
+        if (response.data.errors) {
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server error retrieving features: ' + errmsg)
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving features',
-              message: features.error,
+              message: errmsg,
               theme: 'error',
               timeout: 5000
             },
             { root: true }
           )
         }
+        const features = response.data.data.features
         commit('updateFeatures', features)
       })
     } catch (err) {
@@ -135,6 +142,7 @@ const actions = {
       }).then(response => {
         if (response.data.errors) {
           const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server Error uploading feature: ' + errmsg)
           dispatch('notifications/addNotification',
             {
               title: 'Server Error uploading feature',
@@ -192,7 +200,8 @@ const actions = {
         })
       }).then(response => {
         if (response.data.errors) {
-          const errmsg = response.data.errors.message
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server Error retrieving scenarios: ' + errmsg)
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving scenarios',
@@ -225,6 +234,7 @@ const actions = {
     const background = state.features[i].background
     if (background !== undefined) {
       await dispatch('loadBackgroundSteps', { feature: id, id: state.features[i].background.id })
+      await dispatch('loadBackgroundEnvironment', { feature: id, id: state.features[i].background.id })
     }
   },
 
@@ -255,6 +265,7 @@ const actions = {
       }).then(response => {
         if (response.data.errors) {
           const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server Error retrieving background: ' + errmsg)
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving background',
@@ -314,20 +325,74 @@ const actions = {
           variables: variables
         })
       }).then(response => {
-        // console.log(response)
-        const steps = response.data.data.steps
-        if (steps.error) {
+        if (response.data.errors) {
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server Error retrieving background steps: ' + errmsg)
           dispatch('notifications/addNotification',
             {
               title: 'Server Error retrieving steps',
-              message: steps.error,
+              message: errmsg,
               theme: 'error',
               timeout: 5000
             },
             { root: true }
           )
         }
+        const steps = response.data.data.steps
         commit('updateBackgroundSteps', { id: feature, steps })
+      })
+    } catch (err) {
+      console.log('Retrieving Steps error: ' + err)
+      dispatch('notifications/addNotification',
+        {
+          title: 'Error retrieving steps',
+          message: err,
+          theme: 'error',
+          timeout: 5000
+        },
+        { root: true }
+      )
+    }
+  },
+  // Load the environment of background 'id'
+  loadBackgroundEnvironment: async ({ dispatch, commit }, { feature, id }) => {
+    const variables = {
+      id: id
+    }
+    const query = `query environment($id: Uuid!) {
+      environment(id: $id, src: BACKGROUND) {
+        id
+      }
+    }`
+
+    try {
+      await axios({
+        method: 'post',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        url: ApiRoutes.GraphQL,
+        data: JSON.stringify({
+          query: query,
+          variables: variables
+        })
+      }).then(response => {
+        if (response.data.errors) {
+          const errmsg = response.data.errors[0].message + ': ' + response.data.errors[0].extensions.internal_error
+          console.log('Server Error retrieving background environment: ' + errmsg)
+          dispatch('notifications/addNotification',
+            {
+              title: 'Server Error retrieving environment',
+              message: errmsg,
+              theme: 'error',
+              timeout: 5000
+            },
+            { root: true }
+          )
+        }
+        const environment = response.data.data.environment
+        commit('updateBackgroundEnvironment', { id: feature, environment })
       })
     } catch (err) {
       console.log('Retrieving Steps error: ' + err)

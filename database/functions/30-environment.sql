@@ -39,6 +39,13 @@ CREATE TABLE main.environments (
 
 ALTER TABLE main.environments OWNER TO odin;
 
+CREATE TRIGGER notify_environments
+AFTER INSERT OR UPDATE
+ON main.environments
+FOR EACH ROW
+  EXECUTE PROCEDURE main.tg_notify('notifications');
+
+
 CREATE TABLE main.scenario_environment_map (
   scenario UUID REFERENCES main.scenarios(id) ON DELETE CASCADE,
   environment UUID REFERENCES main.environments(id) ON DELETE CASCADE,
@@ -59,7 +66,7 @@ CREATE TABLE main.indexes (
   id UUID PRIMARY KEY DEFAULT public.gen_random_uuid(),
   index_type VARCHAR(32) REFERENCES main.index_types(id) ON DELETE CASCADE,
   data_source VARCHAR(32) REFERENCES main.data_sources(id) ON DELETE CASCADE,
-  regions VARCHAR(32)[],
+  regions TEXT[],
   signature TEXT
     GENERATED ALWAYS AS (MD5(index_type || '-' || data_source || '-' || public.array2string(regions))) STORED
     CONSTRAINT unique_index_signature UNIQUE,
